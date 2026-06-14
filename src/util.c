@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <linux/limits.h>
 #include <unistd.h>
 
 #include "hxroot.h"
@@ -15,37 +14,40 @@ STATIC void eprintf(char *fmt, ...) {
     va_end(args);
 }
 
-STATIC void HxExpandPath_r(char *dest, const char *path) {
-    // Not absolute = return
-    if(path[0] != '/') { strncpy(dest, path, PATH_MAX-1); return; }
+static bool HxShouldExpand(const char *path) {
+    // Not chrooted?
+    if(!HxRoot) return false;
+    // Not absolute?
+    if(path[0] != '/') return false;
     // Check excludes...
-    for(char **cur = HxBinds; *cur != 0; cur++) {
-        size_t prefix_len = strlen(*cur);
+    for(int i = 0; HxBinds[i] != 0; i++) {
+        size_t prefix_len = strlen(HxBinds[i]);
         // Compare by prefix
-        if(strncmp(path, *cur, prefix_len) == 0) {
-            strncpy(dest, path, PATH_MAX-1);
-            return;
+        if(strncmp(path, HxBinds[i], prefix_len) == 0) {
+            return false;
         }
     }
-    // Already expanded = return
+    // Already expanded?
     if(strncmp(path, HxRoot, HxRootLen) == 0) {
-        strncpy(dest, path, PATH_MAX-1);
-        return;
+        return false;
     }
 
-    snprintf(dest, PATH_MAX-1, "%s%s", HxRoot, path);
+    return true;
 }
 
-static _Thread_local char HxPathBuf[PATH_MAX];
-STATIC char *HxExpandPath(const char *path) {
-    HxExpandPath_r(HxPathBuf, path);
-    return HxPathBuf;
+STATIC size_t HxExpandedLen(const char *path) {
+    if(!HxShouldExpand(path)) {
+        return 0;
+    } else {
+        return HxRootLen + strlen(path) + 1;
+    }
 }
 
-static _Thread_local char HxPathBuf2[PATH_MAX];
-STATIC char *HxExpandPath2(const char *path) {
-    HxExpandPath_r(HxPathBuf2, path);
-    return HxPathBuf2;
+STATIC const char *HxExpandPath(char *dest, const char *path) {
+    if(!HxShouldExpand(path)) return path;
+    char *next = stpcpy(dest, HxRoot);
+    strcpy(next, path);
+    return dest;
 }
 
 STATIC void HxUnexpandPath(char *path) {

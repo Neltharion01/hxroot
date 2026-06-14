@@ -8,12 +8,13 @@ int rename(const char *old, const char *new) {
     if(!rename_real) rename_real = dlsym(RTLD_NEXT, "rename");
     HxInit();
 
-    const char *new_old = old;
-    const char *new_new = new;
-    if(HxRoot) {
-        new_old = HxExpandPath(old);
-        new_new = HxExpandPath2(new);
-    }
+    int oldlen = HxL(old);
+    char oldpathbuf[oldlen];
+    const char *new_old = HxExpandPath(oldpathbuf, old);
+
+    int newlen = HxL(new);
+    char newpathbuf[newlen];
+    const char *new_new = HxExpandPath(newpathbuf, new);
 
     if(HxDebug) eprintf("rename(\"%s\" -> \"%s\", \"%s\" -> \"%s\")\n", old, new_old, new, new_new);
     return rename_real(new_old, new_new);

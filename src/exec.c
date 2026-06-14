@@ -68,9 +68,9 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
 
     size_t argc = arraylen(argv);
 
-    char new_path[PATH_MAX];
-    if(HxRoot) HxExpandPath_r(new_path, path);
-    else strncpy(new_path, path, PATH_MAX);
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
 
     AUTO_CLOSE int fd = open(path, O_RDONLY);
     if(fd == -1) return -1;
@@ -229,6 +229,7 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
                     new_argv[0] = HxLinker;
                     new_argv[1] = new_path;
                     new_argv[2] = 0;
+                    new_path = HxLinker;
                 } else {
                     new_argv[0] = HxLinker;
                     new_argv[1] = "--argv0";
@@ -240,6 +241,7 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
                         i += 1;
                     }
                     new_argv[i] = 0;
+                    new_path = HxLinker;
                 }
 
                 if(HxDebug) {
@@ -251,7 +253,7 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
                     eprintf("], %p)\n", envp);
                 }
 
-                return execve_real(HxLinker, new_argv, envp);
+                return execve_real(new_path, new_argv, envp);
             }
         } else if(buf[EI_CLASS] == ELFCLASS32 && nr >= (ssize_t)sizeof(Elf32_Ehdr)) {
             // Elf32

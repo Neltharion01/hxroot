@@ -13,12 +13,14 @@ int mkstemp(char *template) {
     if(!mkstemp_real) mkstemp_real = dlsym(RTLD_NEXT, "mkstemp");
     HxInit();
 
-    char *new_template = template;
-    if(HxRoot) new_template = (char*)HxExpandPath(template);
+    int len = HxL(template);
+    char pathbuf[len];
+    char *new_template = (char*)HxExpandPath(pathbuf, template);
+
     if(HxDebug) eprintf("mkstemp(\"%s\" -> \"%s\")\n", template, new_template);
 
     int ret = mkstemp_real(new_template);
-    if(ret != -1) {
+    if(ret != -1 && len != 0) {
         template = strnul(template) - 6;
         new_template = strnul(new_template) - 6;
         template[0] = new_template[0];

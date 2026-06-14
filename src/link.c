@@ -8,8 +8,9 @@ int symlink(const char *target, const char *linkpath) {
     if(!symlink_real) symlink_real = dlsym(RTLD_NEXT, "symlink");
     HxInit();
 
-    const char *new_linkpath = linkpath;
-    if(HxRoot) new_linkpath = HxExpandPath(linkpath);
+    int len = HxL(linkpath);
+    char pathbuf[len];
+    const char *new_linkpath = HxExpandPath(pathbuf, linkpath);
 
     if(HxDebug) eprintf("symlink(\"%s\", \"%s\" -> \"%s\")\n", target, linkpath, new_linkpath);
     return symlink_real(target, new_linkpath);
@@ -26,12 +27,13 @@ int link(const char *path1, const char *path2) {
 
     if(HxL2s) return symlink(path1, path2);
 
-    const char *new_path1 = path1;
-    const char *new_path2 = path2;
-    if(HxRoot) {
-        new_path1 = HxExpandPath(path1);
-        new_path2 = HxExpandPath2(path2);
-    }
+    int len1 = HxL(path1);
+    char pathbuf1[len1];
+    const char *new_path1 = HxExpandPath(pathbuf1, path1);
+
+    int len2 = HxL(path2);
+    char pathbuf2[len2];
+    const char *new_path2 = HxExpandPath(pathbuf2, path2);
 
     if(HxDebug) eprintf("link(\"%s\" -> \"%s\", \"%s\" -> \"%s\")\n", path1, new_path1, path2, new_path2);
 

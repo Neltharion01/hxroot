@@ -21,8 +21,10 @@ int open(const char *path, int flags, ...) {
 
     va_end(args);
 
-    const char *new_path = path;
-    if(HxRoot) new_path = HxExpandPath(path);
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
+
     if(HxDebug) eprintf("open(\"%s\" -> \"%s\", 0x%x, 0o%o)\n", path, new_path, flags, mode);
     return open_real(new_path, flags, mode);
 }
@@ -44,8 +46,10 @@ int openat(int dirfd, const char *path, int flags, ...) {
 
     va_end(args);
 
-    const char *new_path = path;
-    if(HxRoot) new_path = HxExpandPath(path);
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
+
     if(HxDebug) eprintf("openat(%d, \"%s\" -> \"%s\", 0x%x, 0o%o)\n", dirfd, path, new_path, flags, mode);
     return openat_real(dirfd, new_path, flags, mode);
 }
@@ -55,8 +59,10 @@ FILE *fopen(const char *path, const char *mode) {
     if(!fopen_real) fopen_real = dlsym(RTLD_NEXT, "fopen");
     HxInit();
 
-    const char *new_path = path;
-    if(HxRoot) new_path = HxExpandPath(path);
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
+
     if(HxDebug) eprintf("fopen(\"%s\" -> \"%s\", \"%s\")\n", path, new_path, mode);
     return fopen_real(new_path, mode);
 }

@@ -8,7 +8,9 @@ int statvfs(const char *restrict path, struct statvfs *restrict buf) {
     if(!statvfs_real) statvfs_real = dlsym(RTLD_NEXT, "statvfs");
     HxInit();
 
-    const char *new_path = path;
-    if(HxRoot) new_path = HxExpandPath(path);
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
+
     return statvfs_real(new_path, buf);
 }
