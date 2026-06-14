@@ -244,7 +244,7 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
     char pathbuf[len];
     const char *new_path = HxExpandPath(pathbuf, path);
 
-    AUTO_CLOSE int fd = open(path, O_RDONLY);
+    AUTO_CLOSE int fd = open(path, O_RDONLY|O_CLOEXEC);
     if(fd == -1) return -1;
 
     char buf[4096];
