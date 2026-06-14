@@ -2,7 +2,7 @@ SOURCES    := $(wildcard src/*.c)
 CXXSOURCES := $(wildcard src/*.cpp)
 OBJS       := $(SOURCES:.c=.o) $(CXXSOURCES:.cpp=.o)
 DEPS       := $(OBJS:.o=.d)
-CFLAGS     := $(INCLUDES) -MMD -MP -pipe -fPIC -Wall -Wextra -Wno-unused-parameter -Wno-missing-attributes
+CFLAGS     := $(INCLUDES) -MMD -MP -pipe -fPIC -Wall -Wextra -Wno-unused-parameter -Wno-missing-attributes -D_FORTIFY_SOURCE=2
 
 RESULT     := libhxroot.so
 
