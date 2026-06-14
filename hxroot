@@ -1,0 +1,38 @@
+#!/bin/sh
+set -e
+
+HxLinker="$GLIBC_PREFIX/lib/ld-linux-aarch64.so.1"
+HxL2s="${HxL2s:-1}"
+HxUid="${HxId:-0}"
+HxGid="${HxId:-0}"
+
+if command -v proot >/dev/null; then
+    HxProotDefault="$(command -v proot)"
+    HxProot="${HxProot:-$HxProotDefault}"
+fi
+
+if [ $# -lt 1 ]; then
+    echo "Usage: hxroot <dest> [/bin/bash]"
+    exit 1
+fi
+
+dest="$(realpath "$1")"
+shift
+
+if [ $# -gt 0 ]; then
+    shell="$1"
+    shift
+else
+    shell="/bin/bash"
+fi
+
+cd "$dest"
+
+env -i TERM="$TERM" \
+    HxRoot="$dest" HxBinds="/dev/ /proc/ /sys/" HxLinker="$HxLinker" HxDebug="$HxDebug" \
+    HxL2s="$HxL2s" HxProot="$HxProot" HxUid="$HxUid" HxGid="$HxGid" \
+    LD_PRELOAD="$HOME/hxroot/libhxroot.so:$GLIBC_PREFIX/lib/libc.so.6" \
+    LD_LIBRARY_PATH="$dest/usr/lib:$dest/usr/lib/aarch64-linux-gnu" \
+    PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin" \
+"$HxLinker" \
+"$dest/$shell" "$@"
