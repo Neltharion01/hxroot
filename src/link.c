@@ -20,26 +20,26 @@ int symlinkat(const char *target, int newdirfd, const char *linkpath) {
     eprintf("UNIMPLEMENTED SHIT! symlinkat\n"); abort();
 }
 
-static int (*link_real)(const char *path1, const char *path2);
-int link(const char *path1, const char *path2) {
+static int (*link_real)(const char *oldpath, const char *newpath);
+int link(const char *oldpath, const char *newpath) {
     if(!link_real) link_real = dlsym(RTLD_NEXT, "link");
     HxInit();
 
-    if(HxL2s) return symlink(path1, path2);
+    if(HxL2s) return symlink(oldpath, newpath);
 
-    int len1 = HxL(path1);
+    int len1 = HxL(oldpath);
     char pathbuf1[len1];
-    const char *new_path1 = HxExpandPath(pathbuf1, path1);
+    const char *new_oldpath = HxExpandPath(pathbuf1, oldpath);
 
-    int len2 = HxL(path2);
+    int len2 = HxL(newpath);
     char pathbuf2[len2];
-    const char *new_path2 = HxExpandPath(pathbuf2, path2);
+    const char *new_newpath = HxExpandPath(pathbuf2, newpath);
 
-    if(HxDebug) eprintf("link(\"%s\" -> \"%s\", \"%s\" -> \"%s\")\n", path1, new_path1, path2, new_path2);
+    if(HxDebug) eprintf("link(\"%s\" -> \"%s\", \"%s\" -> \"%s\")\n", oldpath, new_oldpath, newpath, new_newpath);
 
-    return link_real(new_path1, new_path2);
+    return link_real(new_oldpath, new_newpath);
 }
 
-int linkat(int fd1, const char *path1, int fd2, const char *path2, int flag) {
+int linkat(int olddirfd, const char *oldpath, int newdirfd, const char *newpath, int flag) {
     eprintf("UNIMPLEMENTED SHIT! linkat\n"); abort();
 }
