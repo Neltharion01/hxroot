@@ -17,10 +17,26 @@ ssize_t readlink(const char *path, char *buf, size_t bufsize) {
     if(HxDebug) eprintf("readlink(\"%s\" -> \"%s\", %p, %ld)\n", path, new_path, buf, bufsize);
 
     ssize_t ret = readlink_real(new_path, buf, bufsize);
-    if(ret != -1) HxUnexpandPath(buf);
+    if(ret != -1) {
+        buf[ret] = '\0';
+        HxUnexpandPath(buf);
+    }
     return ret;
 }
 
+ssize_t (*readlinkat_real)(int fd, const char *path, char *buf, size_t bufsize);
 ssize_t readlinkat(int fd, const char *path, char *buf, size_t bufsize) {
-    eprintf("UNIMPLEMENTED SHIT! readlinkat\n"); abort();
+    if(!readlinkat_real) readlinkat_real = dlsym(RTLD_NEXT, "readlinkat");
+    HxInit();
+
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
+
+    int ret = readlinkat_real(fd, new_path, buf, bufsize);
+    if(ret != -1) {
+        buf[ret] = '\0';
+        HxUnexpandPath(buf);
+    }
+    return ret;
 }
