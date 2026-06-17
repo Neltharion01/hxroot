@@ -27,10 +27,6 @@ static bool HxShouldExpand(const char *path) {
             return false;
         }
     }
-    // Already expanded?
-    if(strncmp(path, HxRoot, HxRootLen) == 0) {
-        return false;
-    }
 
     return true;
 }
