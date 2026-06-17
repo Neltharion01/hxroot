@@ -15,7 +15,10 @@ ssize_t readlink(const char *path, char *buf, size_t bufsize) {
     const char *new_path = HxExpandPath(pathbuf, path);
 
     if(HxDebug) eprintf("readlink(\"%s\" -> \"%s\", %p, %ld)\n", path, new_path, buf, bufsize);
-    return readlink_real(new_path, buf, bufsize);
+
+    ssize_t ret = readlink_real(new_path, buf, bufsize);
+    if(ret != -1) HxUnexpandPath(buf);
+    return ret;
 }
 
 ssize_t readlinkat(int fd, const char *path, char *buf, size_t bufsize) {
