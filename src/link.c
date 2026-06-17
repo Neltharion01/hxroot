@@ -12,12 +12,29 @@ int symlink(const char *target, const char *linkpath) {
     char pathbuf[len];
     const char *new_linkpath = HxExpandPath(pathbuf, linkpath);
 
+    int targetlen = HxL(target);
+    char targetbuf[targetlen];
+    const char *new_target = HxExpandPath(targetbuf, target);
+
     if(HxDebug) eprintf("symlink(\"%s\", \"%s\" -> \"%s\")\n", target, linkpath, new_linkpath);
-    return symlink_real(target, new_linkpath);
+    return symlink_real(new_target, new_linkpath);
 }
 
+static int (*symlinkat_real)(const char *target, int newdirfd, const char *linkpath);
 int symlinkat(const char *target, int newdirfd, const char *linkpath) {
-    eprintf("UNIMPLEMENTED SHIT! symlinkat\n"); abort();
+    if(!symlinkat_real) symlinkat_real = dlsym(RTLD_NEXT, "symlinkat");
+    HxInit();
+
+    int len = HxL(linkpath);
+    char pathbuf[len];
+    const char *new_linkpath = HxExpandPath(pathbuf, linkpath);
+
+    int targetlen = HxL(target);
+    char targetbuf[targetlen];
+    const char *new_target = HxExpandPath(targetbuf, target);
+
+    if(HxDebug) eprintf("symlinkat(\"%s\", %d, \"%s\" -> \"%s\")\n", target, newdirfd, linkpath, new_linkpath);
+    return symlinkat_real(new_target, newdirfd, new_linkpath);
 }
 
 static int (*link_real)(const char *oldpath, const char *newpath);
