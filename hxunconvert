@@ -1,0 +1,22 @@
+#!/bin/sh
+set -euo pipefail
+
+if [ "$#" != 1 ]; then
+    echo "Usage: hxunconvert <rootfs>"
+    exit 1
+fi
+
+HxRoot="$(realpath "$1")"
+
+find "$1" -type l | while read l; do
+    c="$(readlink "$l")"
+    case "$c" in
+        /*) ;;
+        *) continue;;
+    esac
+    rc="${c#$HxRoot}"
+    rm "$l"
+    ln -sv "$rc" "$l"
+done
+
+echo Done
