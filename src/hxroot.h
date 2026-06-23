@@ -3,6 +3,9 @@
 
 #define EXPORT __attribute__((visibility("default")))
 #define STATIC __attribute__((visibility("hidden")))
+#define AUTO_CLOSE __attribute__((cleanup(HxAutoCloseFd)))
+#define AUTO_FREE_CHAR __attribute__((cleanup(HxAutoFreeChar)))
+#define AUTO_UNLOCK __attribute__((cleanup(HxAutoUnlock)))
 
 extern char *HxRoot;
 extern size_t HxRootLen;

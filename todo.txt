@@ -3,6 +3,5 @@ group (getgrent, getgrnam)
 shadow (getspent)
 utmp/utmpx (getutent, updwtmp)
 Nuke HxDebug when it gets mostly stable
-
-proper l2s (with refcounting)
-walk dirs to resolve absolute symlinks
+Probably can return link count for stat calls
+Link2symlink is non atomic when creating links

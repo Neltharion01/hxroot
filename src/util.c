@@ -2,6 +2,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <sys/file.h>
 
 #include "hxroot.h"
 
@@ -56,9 +58,28 @@ STATIC void HxUnexpandPath(char *path) {
     }
 }
 
+STATIC HxFlock_t HxFlock(int fd) {
+    if(flock(fd, LOCK_EX) == -1) return -1;
+    return fd;
+}
+
 STATIC void HxAutoCloseFd(int *fd) {
     if(*fd != -1) {
         close(*fd);
         *fd = -1;
+    }
+}
+
+STATIC void HxAutoFreeChar(char **ptr) {
+    if(*ptr != NULL) {
+        free(*ptr);
+        *ptr = NULL;
+    }
+}
+
+STATIC void HxAutoUnlock(HxFlock_t *fl) {
+    if(*fl >= 0) {
+        flock(*fl, LOCK_UN);
+        *fl = -1;
     }
 }
