@@ -155,7 +155,7 @@ static int HxLink2symlink(const char *oldpath, const char *newpath) {
     if(!rp) return -1;
 
     AUTO_FREE_CHAR char *links = NULL;
-    if(asprintf(&links, "%s.links", rp) == -1) return -1;
+    if(asprintf(&links, "%s.hxlinks", rp) == -1) return -1;
     if(access(links, F_OK) == 0) {
         // It is a hardlink
         if(HxL2sIncrement(links) == -1) return -1;
@@ -166,7 +166,7 @@ static int HxLink2symlink(const char *oldpath, const char *newpath) {
         AUTO_FREE_CHAR char *hardlink = HxL2sName(rp);
         if(HxMktemp(hardlink) == -1) return -1;
         AUTO_FREE_CHAR char *hardlink_links = NULL;
-        if(asprintf(&hardlink_links, "%s.links", hardlink) == -1) return -1;
+        if(asprintf(&hardlink_links, "%s.hxlinks", hardlink) == -1) return -1;
 
         if(rename(oldpath, hardlink) == -1) return -1;
         if(HxL2sCreate(hardlink_links) == -1) return -1;

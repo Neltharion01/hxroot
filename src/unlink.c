@@ -87,7 +87,7 @@ int unlink(const char *path) {
         if(ret != -1) {
             rlbuf[ret] = '\0';
             AUTO_FREE_CHAR char *linkpath = NULL;
-            if(asprintf(&linkpath, "%s.links", rlbuf) == -1) return -1;
+            if(asprintf(&linkpath, "%s.hxlinks", rlbuf) == -1) return -1;
             if(access(linkpath, F_OK) == 0) {
                 // Unlink
                 return HxL2sUnlink(rlbuf, linkpath, AT_FDCWD, path);
@@ -120,7 +120,7 @@ int unlinkat(int fd, const char *path, int flag) {
         if(ret != -1) {
             rlbuf[ret] = '\0';
             AUTO_FREE_CHAR char *linkpath = NULL;
-            if(asprintf(&linkpath, "%s.links", rlbuf) == -1) return -1;
+            if(asprintf(&linkpath, "%s.hxlinks", rlbuf) == -1) return -1;
             if(access(linkpath, F_OK) == 0) {
                 // Unlink
                 return HxL2sUnlink(rlbuf, linkpath, fd, path);
