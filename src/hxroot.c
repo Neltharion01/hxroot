@@ -17,20 +17,9 @@ STATIC char *HxProot = 0;
 STATIC int HxUid = -1;
 STATIC int HxGid = -1;
 
-static void HxDieX(char *msg) {
-    eprintf("HxRoot: %s: %s\n", msg, strerror(errno));
-    abort();
-}
-
-static char *(*realpath_real)(const char *restrict path, char *restrict resolved_path);
-
 static void HxDoInit() {
-    if(!realpath_real) realpath_real = dlsym(RTLD_NEXT, "realpath");
-
     char *root = getenv("HxRoot");
     if(root) {
-        root = realpath_real(root, NULL);
-        if(!root) HxDieX("realpath");
         HxRoot = root;
         HxRootLen = strlen(root);
     }
