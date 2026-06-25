@@ -82,8 +82,20 @@ static int HxHandleShebang(char *shebang, const char *new_path, char *const argv
         interp = "/bin/sh";
     }
 
+    char *arg = NULL;
     char *space = strchr(interp, ' ');
-    if(space) *space = '\0';
+
+    if(space) {
+        *space = '\0';
+        space += 1;
+
+        // Skip spaces until we find arg
+        while(*space == ' ') space++;
+
+        if(*space != '\0') {
+            arg = space;
+        }
+    }
 
     char *interp_name = strrchr(interp, '/');
     if(!interp_name) interp_name = interp;
@@ -92,14 +104,13 @@ static int HxHandleShebang(char *shebang, const char *new_path, char *const argv
     // Left branch needs interp_name, path, ..argv[1:] and '\0' (argc+2)
     // Right branch needs interp_name, arg, path, argv[1:] and '\0' (argc+3)
     char *new_argv[argc+3];
-    if(!space) {
+    if(!arg) {
         // Don't have arg
         new_argv[0] = interp_name;
         new_argv[1] = (char*)new_path;
         // Original argv[0] is script's name, we skip it
         memcpy(new_argv+2, argv+1, sizeof(char*) * argc);
     } else {
-        char *arg = space + 1;
         // Has arg
         new_argv[0] = interp_name;
         new_argv[1] = arg;
