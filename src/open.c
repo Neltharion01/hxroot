@@ -2,6 +2,8 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include <dlfcn.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 #include "hxroot.h"
 
@@ -26,9 +28,45 @@ int open(const char *path, int flags, ...) {
     const char *new_path = HxExpandPath(pathbuf, path);
 
     if(HxDebug) eprintf("open(\"%s\" -> \"%s\", 0x%x, 0o%o)\n", path, new_path, flags, mode);
-    return open_real(new_path, flags, mode);
+
+    int ret = open_real(new_path, flags, mode);
+
+    if(ret == -1 && errno == EACCES && HxUid == 0 && HxGid == 0) {
+        // Simulate CAP_DAC_OVERRIDE
+        struct stat st = {0};
+        if(stat(path, &st) == -1) return -1;
+
+        int new_mode = st.st_mode;
+        if(flags & O_WRONLY) {
+            new_mode |= S_IWUSR;
+        } else if(flags & O_RDWR) {
+            new_mode |= S_IRUSR|S_IWUSR;
+        } else {
+            new_mode |= S_IRUSR;
+        }
+
+        if(chmod(path, new_mode) == -1) return -1;
+
+        ret = open_real(new_path, flags, mode);
+
+        if(chmod(path, st.st_mode) == -1) return -1;
+    }
+
+    return ret;
 }
 int open64(const char *path, int flags, ...) __attribute__((alias("open")));
+
+int (*creat_real)(const char *path, mode_t mode);
+int creat(const char *path, mode_t mode) {
+    if(!creat_real) creat_real = dlsym(RTLD_NEXT, "creat");
+    HxInit();
+
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
+
+    return creat_real(new_path, mode);
+}
 
 static int (*openat_real)(int dirfd, const char *path, int flags, ...);
 int openat(int dirfd, const char *path, int flags, ...) {
@@ -51,7 +89,31 @@ int openat(int dirfd, const char *path, int flags, ...) {
     const char *new_path = HxExpandPath(pathbuf, path);
 
     if(HxDebug) eprintf("openat(%d, \"%s\" -> \"%s\", 0x%x, 0o%o)\n", dirfd, path, new_path, flags, mode);
-    return openat_real(dirfd, new_path, flags, mode);
+
+    int ret = openat_real(dirfd, new_path, flags, mode);
+
+    if(ret == -1 && errno == EACCES && HxUid == 0 && HxGid == 0) {
+        // Simulate CAP_DAC_OVERRIDE
+        struct stat st = {0};
+        if(stat(path, &st) == -1) return -1;
+
+        int new_mode = st.st_mode;
+        if(flags & O_WRONLY) {
+            new_mode |= S_IWUSR;
+        } else if(flags & O_RDWR) {
+            new_mode |= S_IRUSR|S_IWUSR;
+        } else {
+            new_mode |= S_IRUSR;
+        }
+
+        if(fchmodat(dirfd, path, new_mode, 0) == -1) return -1;
+
+        ret = openat_real(dirfd, new_path, flags, mode);
+
+        if(chmod(path, st.st_mode) == -1) return -1;
+    }
+
+    return ret;
 }
 
 static FILE *(*fopen_real)(const char *path, const char *mode);
