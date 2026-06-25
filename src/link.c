@@ -168,8 +168,8 @@ static int HxLink2symlink(const char *oldpath, const char *newpath) {
         AUTO_FREE_CHAR char *hardlink_links = NULL;
         if(asprintf(&hardlink_links, "%s.hxlinks", hardlink) == -1) return -1;
 
-        if(rename(oldpath, hardlink) == -1) return -1;
         if(HxL2sCreate(hardlink_links) == -1) return -1;
+        if(rename(oldpath, hardlink) == -1) return -1;
         if(symlink(hardlink, oldpath) == -1) return -1;
         if(symlink(hardlink, newpath) == -1) return -1;
         return 0;
