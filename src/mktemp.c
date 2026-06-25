@@ -65,3 +65,30 @@ int mkstemps(char *template, int suffixlen) {
 int mkostemps(char *template, int suffixlen, int flags) {
     eprintf("UNIMPLEMENTED SHIT! mkostemps\n"); abort();
 }
+
+char *(*mkdtemp_real)(char *template);
+char *mkdtemp(char *template) {
+    if(!mkdtemp_real) mkdtemp_real = dlsym(RTLD_NEXT, "mkdtemp");
+    HxInit();
+
+    int len = HxL(template);
+    char pathbuf[len];
+    char *new_template = (char*)HxExpandPath(pathbuf, template);
+
+    if(HxDebug) eprintf("mkdtemp(\"%s\" -> \"%s\")\n", template, new_template);
+
+    char *ret = mkdtemp_real(new_template);
+    if(ret && len != 0) {
+        ret = template;
+
+        template = strnul(template) - 6;
+        new_template = strnul(new_template) - 6;
+        template[0] = new_template[0];
+        template[1] = new_template[1];
+        template[2] = new_template[2];
+        template[3] = new_template[3];
+        template[4] = new_template[4];
+        template[5] = new_template[5];
+    }
+    return ret;
+}
