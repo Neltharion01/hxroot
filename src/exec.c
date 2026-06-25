@@ -74,10 +74,17 @@ static size_t HxCountArgv(char *const argv[]) {
 static int HxHandleShebang(char *shebang, const char *new_path, char *const argv[], char *const envp[]) {
     int argc = HxCountArgv(argv);
 
-    char *space = strchr(shebang, ' ');
+    char *interp = shebang + 2;
+
+    // Skip spaces in the beginning
+    while(*interp == ' ') interp++;
+    if(*interp == '\0') {
+        interp = "/bin/sh";
+    }
+
+    char *space = strchr(interp, ' ');
     if(space) *space = '\0';
 
-    char *interp = shebang + 2;
     char *interp_name = strrchr(interp, '/');
     if(!interp_name) interp_name = interp;
     else interp_name += 1;
@@ -255,7 +262,7 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
         char *newline = memchr(buf, '\n', nr);
         if(!newline) newline = buf + nr;
         *newline = '\0';
-        return HxHandleShebang(buf, new_path, argv, envp);
+        return HxHandleShebang(buf, path, argv, envp);
     } else if(HxIsElf(buf, nr) && HxIsElf64(buf, nr)) {
         Elf64_Ehdr ehdr;
         memcpy(&ehdr, buf, sizeof(Elf64_Ehdr));

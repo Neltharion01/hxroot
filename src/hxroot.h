@@ -7,6 +7,8 @@
 #define AUTO_FREE_CHAR __attribute__((cleanup(HxAutoFreeChar)))
 #define AUTO_UNLOCK __attribute__((cleanup(HxAutoUnlock)))
 
+#define _Nullable
+
 extern char *HxRoot;
 extern size_t HxRootLen;
 extern char *HxBinds[16];

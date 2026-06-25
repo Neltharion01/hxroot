@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/random.h>
 
 #include "hxroot.h"
 
@@ -58,7 +59,7 @@ char *HxL2sName(const char *path) {
     }
 
     char *ret = NULL;
-    if(asprintf(&ret, "%s/.HxL2s.%s", dirname, basename) == -1) return NULL;
+    if(asprintf(&ret, "%s/.HxL2s.%s.XXXXXX", dirname, basename) == -1) return NULL;
     return ret;
 }
 
@@ -110,6 +111,34 @@ int HxL2sIncrement(const char *linkcountfile) {
     return 0;
 }
 
+static const char *MktempChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+static const int MktempCharsLen = sizeof(MktempChars)-1;
+static int HxMktemp(char *tmpl) {
+    char r[6];
+    ssize_t ret = getrandom(r, 6, 0);
+    if(ret == -1) {
+        return -1;
+    } else if(ret != 6) {
+        errno = ENODATA;
+        return -1;
+    }
+
+    char *XXXXXX = tmpl + strlen(tmpl) - 6;
+    if(strcmp(XXXXXX, "XXXXXX") != 0) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    XXXXXX[0] = MktempChars[r[0] % MktempCharsLen];
+    XXXXXX[1] = MktempChars[r[1] % MktempCharsLen];
+    XXXXXX[2] = MktempChars[r[2] % MktempCharsLen];
+    XXXXXX[3] = MktempChars[r[3] % MktempCharsLen];
+    XXXXXX[4] = MktempChars[r[4] % MktempCharsLen];
+    XXXXXX[5] = MktempChars[r[5] % MktempCharsLen];
+
+    return 0;
+}
+
 // oldpath - existing file
 // newpath - link to be created
 static int HxLink2symlink(const char *oldpath, const char *newpath) {
@@ -135,10 +164,11 @@ static int HxLink2symlink(const char *oldpath, const char *newpath) {
     } else if(errno == ENOENT) {
         // It is not a link
         AUTO_FREE_CHAR char *hardlink = HxL2sName(rp);
-        if(rename(oldpath, hardlink) == -1) return -1;
+        if(HxMktemp(hardlink) == -1) return -1;
         AUTO_FREE_CHAR char *hardlink_links = NULL;
         if(asprintf(&hardlink_links, "%s.links", hardlink) == -1) return -1;
 
+        if(rename(oldpath, hardlink) == -1) return -1;
         if(HxL2sCreate(hardlink_links) == -1) return -1;
         if(symlink(hardlink, oldpath) == -1) return -1;
         if(symlink(hardlink, newpath) == -1) return -1;

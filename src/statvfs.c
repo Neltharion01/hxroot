@@ -5,8 +5,16 @@
 
 #include "hxroot.h"
 
+int (*statfs_real)(const char *path, struct statfs *buf);
 int statfs(const char *path, struct statfs *buf) {
-    eprintf("UNIMPLEMENTED SHIT! statfs\n"); abort();
+    if(!statfs_real) statfs_real = dlsym(RTLD_NEXT, "statfs");
+    HxInit();
+
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
+
+    return statfs_real(new_path, buf);
 }
 
 int (*statvfs_real)(const char *restrict path, struct statvfs *restrict buf);

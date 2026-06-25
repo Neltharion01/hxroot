@@ -67,3 +67,17 @@ FILE *fopen(const char *path, const char *mode) {
     return fopen_real(new_path, mode);
 }
 FILE *fopen64(const char *path, const char *mode) __attribute__((alias("fopen")));
+
+FILE *(*freopen_real)(const char *restrict path, const char *restrict mode, FILE *restrict stream);
+FILE *freopen(const char *restrict path, const char *restrict mode, FILE *restrict stream) {
+    if(!freopen_real) freopen_real = dlsym(RTLD_NEXT, "freopen");
+    HxInit();
+
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
+
+    if(HxDebug) eprintf("freopen(\"%s\" -> \"%s\", \"%s\", %p)\n", path, new_path, mode, stream);
+    return freopen_real(new_path, mode, stream);
+}
+FILE *freopen64(const char *restrict path, const char *restrict mode, FILE *restrict stream) __attribute__((alias("freopen")));

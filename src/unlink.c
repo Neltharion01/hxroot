@@ -81,13 +81,9 @@ int unlink(const char *path) {
     if(!unlink_real) unlink_real = dlsym(RTLD_NEXT, "unlink");
     HxInit();
 
-    int len = HxL(path);
-    char pathbuf[len];
-    const char *new_path = HxExpandPath(pathbuf, path);
-
     if(HxL2s) {
         char rlbuf[PATH_MAX];
-        int ret = readlink(new_path, rlbuf, PATH_MAX-1);
+        int ret = readlink(path, rlbuf, PATH_MAX-1);
         if(ret != -1) {
             rlbuf[ret] = '\0';
             AUTO_FREE_CHAR char *linkpath = NULL;
@@ -106,6 +102,10 @@ int unlink(const char *path) {
         }
     }
 
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
+
     if(HxDebug) eprintf("unlink(\"%s\" -> \"%s\")\n", path, new_path);
     return unlink_real(new_path);
 }
@@ -114,13 +114,9 @@ int unlinkat(int fd, const char *path, int flag) {
     if(!unlinkat_real) unlinkat_real = dlsym(RTLD_NEXT, "unlinkat");
     HxInit();
 
-    int len = HxL(path);
-    char pathbuf[len];
-    const char *new_path = HxExpandPath(pathbuf, path);
-
     if(HxL2s) {
         char rlbuf[PATH_MAX];
-        int ret = readlinkat(fd, new_path, rlbuf, PATH_MAX-1);
+        int ret = readlinkat(fd, path, rlbuf, PATH_MAX-1);
         if(ret != -1) {
             rlbuf[ret] = '\0';
             AUTO_FREE_CHAR char *linkpath = NULL;
@@ -138,6 +134,10 @@ int unlinkat(int fd, const char *path, int flag) {
             return -1;
         }
     }
+
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
 
     if(HxDebug) eprintf("unlinkat(%d, \"%s\" -> \"%s\", 0x%x)\n", fd, path, new_path, flag);
     return unlinkat_real(fd, new_path, flag);

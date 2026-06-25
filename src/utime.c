@@ -21,6 +21,19 @@ int utimes(const char *path, const struct timeval times[2]) {
     return utimes_real(new_path, times);
 }
 
+int (*lutimes_real)(const char *path, const struct timeval times[2]);
+int lutimes(const char *path, const struct timeval times[2]) {
+    if(!lutimes_real) lutimes_real = dlsym(RTLD_NEXT, "lutimes");
+    HxInit();
+
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
+
+    if(HxDebug) eprintf("lutimes(\"%s\" -> \"%s\", %p)\n", path, new_path, times);
+    return lutimes_real(new_path, times);
+}
+
 int (*utimensat_real)(int dirfd, const char *path, const struct timespec times[2], int flags);
 int utimensat(int dirfd, const char *path, const struct timespec times[2], int flags) {
     if(!utimensat_real) utimensat_real = dlsym(RTLD_NEXT, "utimensat");
