@@ -13,44 +13,6 @@
 
 extern char **environ;
 
-static _Thread_local char HxEnvPathBuf[PATH_MAX];
-static const char *HxEnvPathFind(const char *binary_name) {
-    // If the binary name contains a slash, do not search PATH
-    if (strchr(binary_name, '/') != NULL) {
-        if (access(binary_name, X_OK) == 0) {
-            return binary_name;
-        }
-        return NULL;
-    }
-
-    // Retrieve the PATH environment variable
-    char *path_env = getenv("PATH");
-    if (!path_env) return NULL;
-
-    // Duplicate PATH because strtok modifies the string
-    char *path_copy = strdup(path_env);
-    if (!path_copy) return NULL;
-
-    char *token = strtok(path_copy, ":");
-
-    while (token != NULL) {
-        // Construct the potential absolute path
-        snprintf(HxEnvPathBuf, PATH_MAX-1, "%s/%s", token, binary_name);
-
-        // Check if the file exists and is executable
-        if (access(HxEnvPathBuf, X_OK) == 0) {
-            free(path_copy);
-            return HxEnvPathBuf;
-        }
-
-        // Move to the next directory in PATH
-        token = strtok(NULL, ":");
-    }
-
-    free(path_copy);
-    return NULL;
-}
-
 static bool HxIsShebang(char *buf, int nr) {
     return nr >= 2 && buf[0] == '#' && buf[1] == '!';
 }
@@ -298,13 +260,78 @@ int execv(const char *path, char *const argv[]) {
     return execve(path, argv, environ);
 }
 
+static int HxShellExecute(const char *file, char *const argv[], char *const envp[]) {
+    int argc = HxCountArgv(argv);
+
+    // Empty argv: /bin/sh <file> \0
+    // argv>0: /bin/sh <argv>
+    int argvlen;
+    if(argc == 0) {
+        argvlen = 3;
+    } else {
+        argvlen = argc + 2;
+    }
+
+    char *new_argv[argvlen];
+    if(argc == 0) {
+        new_argv[0] = "/bin/sh";
+        new_argv[1] = (char*)file;
+        new_argv[2] = 0;
+    } else {
+        new_argv[0] = "/bin/sh";
+        memcpy(new_argv + 1, argv, argc);
+    }
+
+    return execve("/bin/sh", new_argv, envp);
+}
+
+// From musl
 int execvpe(const char *file, char *const argv[], char *const envp[]) {
-    const char *found = HxEnvPathFind(file);
-    if(!found) {
-        errno = ENOENT;
+    const char *p, *z, *path = getenv("PATH");
+    size_t l, k;
+    int seen_eacces = 0;
+
+    errno = ENOENT;
+    if (!*file) return -1;
+
+    if (strchr(file, '/')) {
+        execve(file, argv, envp);
+        if(errno == ENOEXEC) return HxShellExecute(file, argv, envp);
+    }
+
+    if (!path) path = "/usr/local/bin:/bin:/usr/bin";
+    k = strnlen(file, NAME_MAX+1);
+    if (k > NAME_MAX) {
+        errno = ENAMETOOLONG;
         return -1;
     }
-    return execve(found, argv, envp);
+    l = strnlen(path, PATH_MAX-1)+1;
+
+    for(p=path; ; p=z) {
+        char b[l+k+1];
+        z = strchrnul(p, ':');
+        if (z-p >= l) {
+            if (!*z++) break;
+            continue;
+        }
+        memcpy(b, p, z-p);
+        b[z-p] = '/';
+        memcpy(b+(z-p)+(z>p), file, k+1);
+        execve(b, argv, envp);
+        if(errno == ENOEXEC) return HxShellExecute(b, argv, envp);
+        switch (errno) {
+        case EACCES:
+            seen_eacces = 1;
+        case ENOENT:
+        case ENOTDIR:
+            break;
+        default:
+            return -1;
+        }
+        if (!*z++) break;
+    }
+    if (seen_eacces) errno = EACCES;
+    return -1;
 }
 
 int execvp(const char *file, char *const argv[]) {
@@ -364,13 +391,7 @@ int execlp(const char *file, const char *arg, ...) {
     for(size_t i = 1; i <= argc; i++) argv[i] = va_arg(args, char*);
     va_end(args);
 
-    const char *found = HxEnvPathFind(file);
-    if(!found) {
-        errno = ENOENT;
-        return -1;
-    }
-
-    return execve(found, argv, environ);
+    return execvpe(file, argv, environ);
 }
 
 int execveat(int dirfd, const char *path, char *const argv[], char *const envp[], int flags) {
