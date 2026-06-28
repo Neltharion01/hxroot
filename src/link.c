@@ -199,7 +199,7 @@ int link(const char *oldpath, const char *newpath) {
     return link_real(new_oldpath, new_newpath);
 }
 
-int (*linkat_real)(int olddirfd, const char *oldpath, int newdirfd, const char *newpath, int flag);
+static int (*linkat_real)(int olddirfd, const char *oldpath, int newdirfd, const char *newpath, int flag);
 int linkat(int olddirfd, const char *oldpath, int newdirfd, const char *newpath, int flag) {
     if(!linkat_real) linkat_real = dlsym(RTLD_NEXT, "linkat");
     HxInit();
