@@ -18,9 +18,13 @@ static bool HxIsShebang(char *buf, int nr) {
 }
 
 static bool HxIsElf(const char *buf, int nr) {
-    return nr >= EI_NIDENT &&
+    return nr >= 4 &&
         buf[0] == 0x7f && buf[1] == 'E' &&
         buf[2] == 'L' && buf[3] == 'F';
+}
+
+static bool HxIsElf32(char *buf, int nr) {
+    return nr >= (int)sizeof(Elf32_Ehdr) && buf[EI_CLASS] == ELFCLASS32;
 }
 
 static bool HxIsElf64(char *buf, int nr) {
@@ -123,7 +127,7 @@ static int HxHasInterp(int fd, Elf64_Ehdr *ehdr) {
 }
 
 static int (*execve_real)(const char *path, char *const argv[], char *const envp[]);
-static int HxHandleElf(Elf64_Ehdr *ehdr, const char *new_path, char *const argv[], char *const envp[]) {
+static int HxHandleElf64(Elf64_Ehdr *ehdr, const char *new_path, char *const argv[], char *const envp[]) {
     int argc = HxCountArgv(argv);
 
     // argc == 0: ld-linux-aarch64.so.1 <new_path> \0
@@ -131,6 +135,7 @@ static int HxHandleElf(Elf64_Ehdr *ehdr, const char *new_path, char *const argv[
     char *new_argv[argc+4];
     if(!HxLinker) {
         // HxLinker not defined = execute as is
+        // TODO: expand linker path
         memcpy(new_argv, argv, sizeof(char*) * (argc+1));
     } else if(argv[0] == 0) {
         // Empty argv
@@ -168,6 +173,12 @@ static int HxHandleElf(Elf64_Ehdr *ehdr, const char *new_path, char *const argv[
 static int HxHandleProot(const char *path, char *const argv[], char *const envp[]) {
     int argc = HxCountArgv(argv);
     int envc = HxCountArgv(envp);
+
+    if(!HxProot) {
+        eprintf("HxProot variable is unset\n");
+        errno = ENOENT;
+        return -1;
+    }
 
     char *new_envp[envc+1];
     memset(new_envp, 0, sizeof(char*) * (envc+1));
@@ -243,17 +254,17 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
         int ret = HxHasInterp(fd, &ehdr);
         if(ret == -1) return -1;
         if(ret) {
-            return HxHandleElf(&ehdr, new_path, argv, envp);
+            return HxHandleElf64(&ehdr, new_path, argv, envp);
+        } else {
+            return HxHandleProot(path, argv, envp);
         }
-    }
-
-    if(!HxProot) {
-        eprintf("HxProot variable is unset\n");
-        errno = ENOENT;
+    } else if(HxIsElf(buf, nr) && HxIsElf32(buf, nr)) {
+        // TODO needs special handling
+        return HxHandleProot(path, argv, envp);
+    } else {
+        errno = ENOEXEC;
         return -1;
     }
-
-    return HxHandleProot(path, argv, envp);
 }
 
 int execv(const char *path, char *const argv[]) {
@@ -279,7 +290,7 @@ static int HxShellExecute(const char *file, char *const argv[], char *const envp
         new_argv[2] = 0;
     } else {
         new_argv[0] = "/bin/sh";
-        memcpy(new_argv + 1, argv, argc);
+        memcpy(new_argv + 1, argv, sizeof(char*)*(argc+1));
     }
 
     return execve("/bin/sh", new_argv, envp);
