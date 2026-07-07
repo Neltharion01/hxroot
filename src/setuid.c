@@ -23,10 +23,30 @@ int setuid(uid_t uid) { HxInit(); HxSetUid(uid); return 0; }
 int setgid(gid_t gid) { HxInit(); HxSetGid(gid); return 0; }
 int seteuid(uid_t euid) { HxInit(); HxSetUid(euid); return 0; }
 int setegid(gid_t egid) { HxInit(); HxSetGid(egid); return 0; }
-int setreuid(uid_t ruid, uid_t euid) { HxInit(); HxSetUid(euid); return 0; }
-int setregid(gid_t rgid, gid_t egid) { HxInit(); HxSetGid(egid); return 0; }
-int setresuid(uid_t ruid, uid_t euid, uid_t suid) { HxInit(); HxSetUid(euid); return 0; }
-int setresgid(gid_t rgid, gid_t egid, gid_t sgid) { HxInit(); HxSetGid(egid); return 0; }
+
+int setreuid(uid_t ruid, uid_t euid) {
+    HxInit();
+    if(ruid != -1) HxSetUid(ruid);
+    return 0;
+}
+
+int setregid(gid_t rgid, gid_t egid) {
+    HxInit();
+    if(rgid != -1) HxSetGid(rgid);
+    return 0;
+}
+
+int setresuid(uid_t ruid, uid_t euid, uid_t suid) {
+    HxInit();
+    if(ruid != -1) HxSetUid(ruid);
+    return 0;
+}
+
+int setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
+    HxInit();
+    if(rgid != -1) HxSetGid(rgid);
+    return 0;
+}
 
 int setgroups(size_t size, const gid_t list[]) {
     return 0;
