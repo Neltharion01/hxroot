@@ -11,6 +11,15 @@ if command -v proot >/dev/null; then
     HxProot="${HxProot:-$HxProotDefault}"
 fi
 
+case "$HxGdb" in
+    # Do nothing
+    "") ;;
+    # Enable
+    1) HxGdb="gdb --args";;
+    # Invalid value
+    *) HxGdb=;;
+esac
+
 if [ $# -lt 1 ]; then
     echo "Usage: hxroot <dest> [/bin/bash]"
     exit 1
@@ -28,6 +37,7 @@ fi
 
 cd "$dest"
 
+$HxGdb \
 env -i TERM="$TERM" HOME="/root" \
     HxRoot="$dest" HxBinds="/dev/ /proc/ /sys/" HxLinker="$HxLinker" HxDebug="$HxDebug" \
     HxL2s="$HxL2s" HxProot="$HxProot" HxUid="$HxUid" HxGid="$HxGid" \
