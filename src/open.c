@@ -56,7 +56,7 @@ int open(const char *path, int flags, ...) {
 }
 int open64(const char *path, int flags, ...) __attribute__((alias("open")));
 
-int (*creat_real)(const char *path, mode_t mode);
+static int (*creat_real)(const char *path, mode_t mode);
 int creat(const char *path, mode_t mode) {
     if(!creat_real) creat_real = dlsym(RTLD_NEXT, "creat");
     HxInit();
@@ -130,7 +130,7 @@ FILE *fopen(const char *path, const char *mode) {
 }
 FILE *fopen64(const char *path, const char *mode) __attribute__((alias("fopen")));
 
-FILE *(*freopen_real)(const char *restrict path, const char *restrict mode, FILE *restrict stream);
+static FILE *(*freopen_real)(const char *restrict path, const char *restrict mode, FILE *restrict stream);
 FILE *freopen(const char *restrict path, const char *restrict mode, FILE *restrict stream) {
     if(!freopen_real) freopen_real = dlsym(RTLD_NEXT, "freopen");
     HxInit();
@@ -143,3 +143,7 @@ FILE *freopen(const char *restrict path, const char *restrict mode, FILE *restri
     return freopen_real(new_path, mode, stream);
 }
 FILE *freopen64(const char *restrict path, const char *restrict mode, FILE *restrict stream) __attribute__((alias("freopen")));
+
+int __open_2(const char *path, int oflag) {
+    return open(path, oflag);
+}
