@@ -10,6 +10,8 @@
 #include <errno.h>
 
 #include "hxroot.h"
+#include "elfutil.h"
+#include "ldlib.h"
 
 extern char **environ;
 
@@ -88,64 +90,92 @@ static int HxHandleShebang(char *shebang, const char *new_path, char *const argv
     return execve(interp, new_argv, envp);
 }
 
-static int HxHasInterp(int fd, Elf64_Ehdr *ehdr) {
-    if(ehdr->e_shnum * sizeof(Elf64_Shdr) > 4096) {
-        // We aren't going to allocate that much
-        errno = E2BIG;
-        return -1;
+static int (*execve_real)(const char *path, char *const argv[], char *const envp[]);
+static int HxHandleElf64(const char *new_path, char *const argv[], char *const envp[], struct HxElfInfo *info) {
+    int argc = HxCountArgv(argv);
+    const char *interp = NULL;
+
+    // Declare linker buf in outside block
+    int len = HxL(info->interp);
+    char pathbuf[len];
+
+    if(HxLinker) {
+        interp = HxLinker;
+    } else {
+        // HxLinker not defined = expand interp path
+        interp = HxExpandPath(pathbuf, info->interp);
     }
 
-    Elf64_Shdr sections[ehdr->e_shnum];
+    // Declare envp copy in outside block
+    int envc = HxCountArgv(envp);
+    char *new_envp[envc+2];
+    memcpy(new_envp, envp, (envc+1)*sizeof(char*));
+    AUTO_FREE_LDLIB HxLdlib new_ldlib = {0};
 
-    off_t off = lseek(fd, ehdr->e_shoff, SEEK_SET);
-    if(off == -1) return -1;
-    ssize_t nr = read(fd, sections, sizeof(Elf64_Shdr) * ehdr->e_shnum);
-    if(nr == -1) return -1;
-    if(nr != (ssize_t)sizeof(Elf64_Shdr) * ehdr->e_shnum) { errno = ENODATA; return -1; }
+    if(info->rpath || info->runpath) {
+        // Find LD_LIBRARY_PATH
+        int ldlib_idx = -1;
+        for(int i = 0; i <= envc; i++) {
+            if(strncmp(envp[i], "LD_LIBRARY_PATH=", strlen("LD_LIBRARY_PATH=")) == 0) {
+                ldlib_idx = i;
+                break;
+            }
+        }
 
-    Elf64_Shdr *strtab = &sections[ehdr->e_shstrndx];
-    if(strtab->sh_size > 4096) {
-        errno = E2BIG;
-        return -1;
-    }
-    char strtab_s[strtab->sh_size];
+        if(ldlib_idx != -1) {
+            HxLdlib_set(&new_ldlib, envp[ldlib_idx]);
+        }
 
-    off = lseek(fd, strtab->sh_offset, SEEK_SET);
-    if(off == -1) return -1;
-    nr = read(fd, strtab_s, strtab->sh_size);
-    if(nr == -1) return -1;
-    if(nr != (ssize_t)strtab->sh_size) { errno = ENODATA; return -1; }
+        if(info->rpath) {
+            char *saveptr = NULL;
+            char *tok = strtok_r(info->rpath, ":", &saveptr);
+            while(tok) {
+                len = HxL(tok);
+                if(len) {
+                    char tokbuf[len];
+                    HxExpandPath(tokbuf, tok);
+                    // TODO append only if not already contains
+                    HxLdlib_append(&new_ldlib, tokbuf);
+                }
+                tok = strtok_r(NULL, ":", &saveptr);
+            }
+        }
+        if(info->runpath) {
+            char *saveptr = NULL;
+            char *tok = strtok_r(info->runpath, ":", &saveptr);
+            while(tok) {
+                len = HxL(tok);
+                if(len) {
+                    char tokbuf[len];
+                    HxExpandPath(tokbuf, tok);
+                    HxLdlib_append(&new_ldlib, tokbuf);
+                }
+                tok = strtok_r(NULL, ":", &saveptr);
+            }
+        }
 
-    for(int i = 0; i < ehdr->e_shnum; i++) {
-        char *name = strtab_s + sections[i].sh_name;
-        if(strcmp(name, ".interp") == 0) {
-            return true;
+        if(new_ldlib.buf) {
+            if(ldlib_idx != -1) {
+                new_envp[ldlib_idx] = new_ldlib.buf;
+            } else {
+                new_envp[envc] = new_ldlib.buf;
+                new_envp[envc+1] = '\0';
+            }
         }
     }
-
-    return false;
-}
-
-static int (*execve_real)(const char *path, char *const argv[], char *const envp[]);
-static int HxHandleElf64(Elf64_Ehdr *ehdr, const char *new_path, char *const argv[], char *const envp[]) {
-    int argc = HxCountArgv(argv);
 
     // argc == 0: ld-linux-aarch64.so.1 <new_path> \0
     // argc >= 1: ld-linux-aarch64.so.1 --argv0 <argv[0]> <new_path> <argv[1:]> \0
     char *new_argv[argc+4];
-    if(!HxLinker) {
-        // HxLinker not defined = execute as is
-        // TODO: expand linker path
-        memcpy(new_argv, argv, sizeof(char*) * (argc+1));
-    } else if(argv[0] == 0) {
+    if(argv[0] == 0) {
         // Empty argv
-        new_argv[0] = HxLinker;
+        new_argv[0] = (char*)interp;
         new_argv[1] = (char*)new_path;
         new_argv[2] = 0;
-        new_path = HxLinker;
+        new_path = interp;
     } else {
-        // Execute with linker
-        new_argv[0] = HxLinker;
+        // Copy argv
+        new_argv[0] = (char*)interp;
         new_argv[1] = "--argv0";
         new_argv[2] = argv[0];
         new_argv[3] = (char*)new_path;
@@ -155,7 +185,7 @@ static int HxHandleElf64(Elf64_Ehdr *ehdr, const char *new_path, char *const arg
             i += 1;
         }
         new_argv[i] = 0;
-        new_path = HxLinker;
+        new_path = interp;
     }
 
     if(HxDebug) {
@@ -167,7 +197,7 @@ static int HxHandleElf64(Elf64_Ehdr *ehdr, const char *new_path, char *const arg
         eprintf("], %p)\n", envp);
     }
 
-    return execve_real(new_path, new_argv, envp);
+    return execve_real(new_path, new_argv, new_envp);
 }
 
 static int HxHandleProot(const char *path, char *const argv[], char *const envp[]) {
@@ -251,10 +281,11 @@ int execve(const char *path, char *const argv[], char *const envp[]) {
         Elf64_Ehdr ehdr;
         memcpy(&ehdr, buf, sizeof(Elf64_Ehdr));
 
-        int ret = HxHasInterp(fd, &ehdr);
-        if(ret == -1) return -1;
-        if(ret) {
-            return HxHandleElf64(&ehdr, new_path, argv, envp);
+        AUTO_FREE_ELFINFO struct HxElfInfo out = {0};
+        if(HxParseElfInfo64(fd, &ehdr, &out) == -1) return -1;
+
+        if(out.interp) {
+            return HxHandleElf64(new_path, argv, envp, &out);
         } else {
             return HxHandleProot(path, argv, envp);
         }
