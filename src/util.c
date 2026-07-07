@@ -7,7 +7,7 @@
 
 #include "hxroot.h"
 
-STATIC void eprintf(char *fmt, ...) {
+PRIVATE void eprintf(char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
 
@@ -33,7 +33,7 @@ static bool HxShouldExpand(const char *path) {
     return true;
 }
 
-STATIC size_t HxExpandedLen(const char *path) {
+PRIVATE size_t HxExpandedLen(const char *path) {
     if(!HxShouldExpand(path)) {
         return 0;
     } else {
@@ -41,14 +41,14 @@ STATIC size_t HxExpandedLen(const char *path) {
     }
 }
 
-STATIC const char *HxExpandPath(char *dest, const char *path) {
+PRIVATE const char *HxExpandPath(char *dest, const char *path) {
     if(!HxShouldExpand(path)) return path;
     char *next = stpcpy(dest, HxRoot);
     strcpy(next, path);
     return dest;
 }
 
-STATIC void HxUnexpandPath(char *path) {
+PRIVATE void HxUnexpandPath(char *path) {
     // If prefix equals to root...
     if(strncmp(path, HxRoot, HxRootLen) == 0) {
         // ...move everything after it to beginning
@@ -58,26 +58,26 @@ STATIC void HxUnexpandPath(char *path) {
     }
 }
 
-STATIC HxFlock_t HxFlock(int fd) {
+PRIVATE HxFlock_t HxFlock(int fd) {
     if(flock(fd, LOCK_EX) == -1) return -1;
     return fd;
 }
 
-STATIC void HxAutoCloseFd(int *fd) {
+PRIVATE void HxAutoCloseFd(int *fd) {
     if(*fd != -1) {
         close(*fd);
         *fd = -1;
     }
 }
 
-STATIC void HxAutoFreeChar(char **ptr) {
+PRIVATE void HxAutoFreeChar(char **ptr) {
     if(*ptr != NULL) {
         free(*ptr);
         *ptr = NULL;
     }
 }
 
-STATIC void HxAutoUnlock(HxFlock_t *fl) {
+PRIVATE void HxAutoUnlock(HxFlock_t *fl) {
     if(*fl >= 0) {
         flock(*fl, LOCK_UN);
         *fl = -1;

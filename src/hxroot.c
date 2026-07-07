@@ -6,16 +6,16 @@
 
 #include "hxroot.h"
 
-STATIC char *HxRoot = 0;
-STATIC size_t HxRootLen = 0;
-STATIC char *HxBinds[16] = {0};
-STATIC int HxBindsLen = -1;
-STATIC bool HxDebug = false;
-STATIC char *HxLinker = 0;
-STATIC bool HxL2s = false;
-STATIC char *HxProot = 0;
-STATIC int HxUid = -1;
-STATIC int HxGid = -1;
+PRIVATE char *HxRoot = 0;
+PRIVATE size_t HxRootLen = 0;
+PRIVATE char *HxBinds[16] = {0};
+PRIVATE int HxBindsLen = -1;
+PRIVATE bool HxDebug = false;
+PRIVATE char *HxLinker = 0;
+PRIVATE bool HxL2s = false;
+PRIVATE char *HxProot = 0;
+PRIVATE int HxUid = -1;
+PRIVATE int HxGid = -1;
 
 static void HxDoInit() {
     char *root = getenv("HxRoot");
@@ -65,6 +65,6 @@ static void HxDoInit() {
 static pthread_once_t HxOnce = PTHREAD_ONCE_INIT;
 
 __attribute__((constructor))
-STATIC void HxInit() {
+PRIVATE void HxInit() {
     pthread_once(&HxOnce, HxDoInit);
 }

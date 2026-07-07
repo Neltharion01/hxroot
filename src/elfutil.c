@@ -114,7 +114,7 @@ static int HxReadInterp64(int fd, Elf64_Ehdr *ehdr, Elf64_Shdr *sections, const 
     return 0;
 }
 
-STATIC int HxParseElfInfo64(int fd, Elf64_Ehdr *ehdr, struct HxElfInfo *out) {
+PRIVATE int HxParseElfInfo64(int fd, Elf64_Ehdr *ehdr, struct HxElfInfo *out) {
     if(ehdr->e_shnum * sizeof(Elf64_Shdr) > 4096) {
         // We aren't going to allocate that much
         errno = E2BIG;
@@ -144,7 +144,7 @@ STATIC int HxParseElfInfo64(int fd, Elf64_Ehdr *ehdr, struct HxElfInfo *out) {
     return 0;
 }
 
-STATIC void HxDestroyElfInfo(struct HxElfInfo *info) {
+PRIVATE void HxDestroyElfInfo(struct HxElfInfo *info) {
     if(info->interp) {
         free(info->interp);
         info->interp = NULL;

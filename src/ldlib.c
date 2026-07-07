@@ -14,7 +14,7 @@ static void HxLdlibAllocate(HxLdlib *ldlib, size_t size) {
     }
 }
 
-STATIC void HxLdlib_set(HxLdlib *ldlib, char *s) {
+PRIVATE void HxLdlib_set(HxLdlib *ldlib, char *s) {
     size_t slen = strlen(s) + 1;
     HxLdlibAllocate(ldlib, slen>512 ? slen : 512);
 
@@ -22,7 +22,7 @@ STATIC void HxLdlib_set(HxLdlib *ldlib, char *s) {
     ldlib->bufpos = strlen(s);
 }
 
-STATIC void HxLdlib_append(HxLdlib *ldlib, char *s) {
+PRIVATE void HxLdlib_append(HxLdlib *ldlib, char *s) {
     size_t slen = strlen("LD_LIBRARY_PATH=") + strlen(s) + 1;
     HxLdlibAllocate(ldlib, slen>512 ? slen : 512);
 
@@ -39,7 +39,7 @@ STATIC void HxLdlib_append(HxLdlib *ldlib, char *s) {
     }
 }
 
-STATIC void HxDestroyLdlib(HxLdlib *ldlib) {
+PRIVATE void HxDestroyLdlib(HxLdlib *ldlib) {
     if(ldlib->buf) {
         free(ldlib->buf);
         ldlib->buf = NULL;
