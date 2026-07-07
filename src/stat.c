@@ -38,6 +38,7 @@ int fstat(int fd, struct stat *statbuf) {
     }
     return ret;
 }
+int fstat64(int fd, struct stat64 *statbuf) __attribute__((alias("fstat")));
 
 static int (*lstat_real)(const char *path, struct stat *statbuf);
 int lstat(const char *path, struct stat *statbuf) {

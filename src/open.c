@@ -115,6 +115,7 @@ int openat(int dirfd, const char *path, int flags, ...) {
 
     return ret;
 }
+int openat64(int dirfd, const char *path, int flags, ...) __attribute__((alias("openat")));
 
 static FILE *(*fopen_real)(const char *path, const char *mode);
 FILE *fopen(const char *path, const char *mode) {
