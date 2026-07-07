@@ -24,6 +24,21 @@ int stat(const char *path, struct stat *statbuf) {
 }
 int stat64(const char *path, struct stat64 *statbuf) __attribute__((alias("stat")));
 
+static int (*fstat_real)(int fd, struct stat *statbuf);
+int fstat(int fd, struct stat *statbuf) {
+    if(!fstat_real) fstat_real = dlsym(RTLD_NEXT, "fstat");
+    HxInit();
+
+    if(HxDebug) eprintf("fstat(%d, %p)\n", fd, statbuf);
+
+    int ret = fstat_real(fd, statbuf);
+    if(ret == 0) {
+        if(HxUid != -1) statbuf->st_uid = HxUid;
+        if(HxGid != -1) statbuf->st_gid = HxGid;
+    }
+    return ret;
+}
+
 static int (*lstat_real)(const char *path, struct stat *statbuf);
 int lstat(const char *path, struct stat *statbuf) {
     if(!lstat_real) lstat_real = dlsym(RTLD_NEXT, "lstat");
