@@ -21,7 +21,7 @@ int getpwent_r(struct passwd *restrict pwbuf, char *restrict buf, size_t size, s
 
 struct passwd *getpwent(void) {
     struct passwd *pwbufp = NULL;
-    int ret = getpwent_r(&HxPwd, HxPwdBuf, 256, &pwbufp);
+    int ret = getpwent_r(&HxPwd, HxPwdBuf, sizeof(HxPwdBuf), &pwbufp);
     if(ret != 0) {
         errno = ret;
         return NULL;
@@ -41,56 +41,6 @@ void endpwent(void) {
     }
 }
 
-struct passwd *(*getpwnam_real)(const char *name);
-struct passwd *getpwnam(const char *name) {
-    if(!getpwnam_real) getpwnam_real = dlsym(RTLD_NEXT, "getpwnam");
-    HxInit();
-
-    if(HxDebug) eprintf("getpwnam(\"%s\")\n", name);
-
-    long save = -1;
-    if(HxPwdFile) {
-        save = ftell(HxPwdFile);
-        rewind(HxPwdFile);
-    }
-
-    struct passwd *ret = getpwent();
-    while(ret != NULL && strcmp(ret->pw_name, name) != 0) {
-        ret = getpwent();
-    }
-
-    if(save != -1) fseek(HxPwdFile, save, SEEK_SET);
-
-    if(ret == NULL) ret = getpwnam_real(name);
-
-    return ret;
-}
-
-struct passwd *(*getpwuid_real)(uid_t uid);
-struct passwd *getpwuid(uid_t uid) {
-    if(!getpwuid_real) getpwuid_real = dlsym(RTLD_NEXT, "getpwuid");
-    HxInit();
-
-    if(HxDebug) eprintf("getpwuid(%d)\n", uid);
-
-    long save = -1;
-    if(HxPwdFile) {
-        save = ftell(HxPwdFile);
-        rewind(HxPwdFile);
-    }
-
-    struct passwd *ret = getpwent();
-    while(ret != NULL && ret->pw_uid != uid) {
-        ret = getpwent();
-    }
-
-    if(save != -1) fseek(HxPwdFile, save, SEEK_SET);
-
-    if(ret == NULL) ret = getpwuid_real(uid);
-
-    return ret;
-}
-
 int (*getpwnam_r_real)(const char *name, struct passwd *pwd, char *buf, size_t size, struct passwd **restrict result);
 int getpwnam_r(const char *name, struct passwd *pwd, char *buf, size_t size, struct passwd **restrict result) {
     // Lazy init
@@ -100,7 +50,7 @@ int getpwnam_r(const char *name, struct passwd *pwd, char *buf, size_t size, str
     // Debug
     if(HxDebug) eprintf("getpwnam_r(\"%s\")\n", name);
 
-    // Try to open guest passws
+    // Try to open guest passwd
     FILE *f = fopen("/etc/passwd", "r");
     if(!f) {
         *result = NULL;
@@ -131,7 +81,7 @@ int getpwuid_r(uid_t uid, struct passwd *restrict pwd, char *buf, size_t size, s
     // Debug
     if(HxDebug) eprintf("getpwuid_r(%d)\n", uid);
 
-    // Try to open guest passws
+    // Try to open guest passwd
     FILE *f = fopen("/etc/passwd", "r");
     if(!f) {
         *result = NULL;
@@ -140,7 +90,7 @@ int getpwuid_r(uid_t uid, struct passwd *restrict pwd, char *buf, size_t size, s
 
     // Iterate until entry found
     int ret = fgetpwent_r(f, pwd, buf, size, result);
-    while(ret != 0 || pwd->pw_uid == uid) {
+    while(ret == 0 && pwd->pw_uid != uid) {
         ret = fgetpwent_r(f, pwd, buf, size, result);
     }
 
@@ -150,6 +100,26 @@ int getpwuid_r(uid_t uid, struct passwd *restrict pwd, char *buf, size_t size, s
     // Still not found -> return null
     if(ret != 0) *result = 0;
     return ret;
+}
+
+struct passwd *getpwnam(const char *name) {
+    struct passwd *result = NULL;
+    int ret = getpwnam_r(name, &HxPwd, HxPwdBuf, sizeof(HxPwdBuf), &result);
+    if(ret != 0) {
+        errno = ret;
+        return NULL;
+    }
+    return result;
+}
+
+struct passwd *getpwuid(uid_t uid) {
+    struct passwd *result = NULL;
+    int ret = getpwuid_r(uid, &HxPwd, HxPwdBuf, sizeof(HxPwdBuf), &result);
+    if(ret != 0) {
+        errno = ret;
+        return NULL;
+    }
+    return result;
 }
 
 int (*getpw_real)(uid_t uid, char *buf);
