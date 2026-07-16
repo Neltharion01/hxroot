@@ -5,12 +5,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <sys/stat.h>
 
 #include "hxroot.h"
-
-int remove(const char *path) {
-    eprintf("UNIMPLEMENTED SHIT! remove\n"); abort();
-}
 
 int (*rmdir_real)(const char *path);
 int rmdir(const char *path) {
@@ -141,4 +138,12 @@ int unlinkat(int fd, const char *path, int flag) {
 
     if(HxDebug) eprintf("unlinkat(%d, \"%s\" -> \"%s\", 0x%x)\n", fd, path, new_path, flag);
     return unlinkat_real(fd, new_path, flag);
+}
+
+int remove(const char *path) {
+    struct stat st = {0};
+    if(lstat(path, &st) == -1) return -1;
+
+    if(S_ISDIR(st.st_mode)) return rmdir(path);
+    return unlink(path);
 }
