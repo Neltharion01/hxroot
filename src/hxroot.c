@@ -17,6 +17,10 @@ PRIVATE char *HxProot = 0;
 PRIVATE int HxUid = -1;
 PRIVATE int HxGid = -1;
 
+PRIVATE char **HxEnviron = 0;
+
+extern char **environ;
+
 static void HxDoInit() {
     char *root = getenv("HxRoot");
     if(root) {
@@ -60,6 +64,10 @@ static void HxDoInit() {
 
     char *proot = getenv("HxProot");
     if(proot) HxProot = strdup(proot);
+
+    size_t size = HxCountArgv(environ)+1;
+    HxEnviron = calloc(size, sizeof(char*));
+    memcpy(HxEnviron, environ, size*sizeof(char*));
 }
 
 static pthread_once_t HxOnce = PTHREAD_ONCE_INIT;

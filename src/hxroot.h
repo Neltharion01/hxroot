@@ -22,6 +22,9 @@ extern char *HxProot;
 extern int HxUid;
 extern int HxGid;
 
+// Environ backup to workaround programs which modify environ directly (hello shadow)
+extern char **HxEnviron;
+
 #include "util.h"
 
 void HxInit();

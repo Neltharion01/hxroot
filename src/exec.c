@@ -33,12 +33,6 @@ static bool HxIsElf64(char *buf, int nr) {
     return nr >= (int)sizeof(Elf64_Ehdr) && buf[EI_CLASS] == ELFCLASS64;
 }
 
-static size_t HxCountArgv(char *const argv[]) {
-    size_t count = 0;
-    while(argv[count] != 0) count += 1;
-    return count;
-}
-
 static int HxHandleShebang(char *shebang, const char *new_path, char *const argv[], char *const envp[]) {
     int argc = HxCountArgv(argv);
 
@@ -90,6 +84,27 @@ static int HxHandleShebang(char *shebang, const char *new_path, char *const argv
     return execve(interp, new_argv, envp);
 }
 
+struct HxEnv {
+    char **envp;
+    int idx;
+};
+
+void HxEnv_append(struct HxEnv *env, char *var) {
+    env->envp[env->idx] = var;
+    env->envp[env->idx+1] = '\0';
+    env->idx += 1;
+}
+
+int HxFindEnv(char **envp, const char *name) {
+    int namelen = strlen(name);
+    for(int i = 0; envp[i]; i++) {
+        if(strncmp(envp[i], name, namelen) == 0 && envp[i][namelen] == '=') {
+            return i;
+        }
+    }
+    return -1;
+}
+
 static int (*execve_real)(const char *path, char *const argv[], char *const envp[]);
 static int HxHandleElf64(const char *new_path, char *const argv[], char *const envp[], struct HxElfInfo *info) {
     int argc = HxCountArgv(argv);
@@ -106,21 +121,53 @@ static int HxHandleElf64(const char *new_path, char *const argv[], char *const e
         interp = HxExpandPath(pathbuf, info->interp);
     }
 
+    // In case of cleared env, we have to preserve these env variables:
+    const char *PRESERVE_ENV[] = { "LD_PRELOAD", "LD_LIBRARY_PATH", "HxLinker", "HxProot", "HxRoot", "HxBinds", "HxL2s", "HxUid", "HxGid", "HxDebug" };
+    const size_t PRESERVE_ENV_LEN = sizeof(PRESERVE_ENV) / sizeof(char*);
+
     // Declare envp copy in outside block
     int envc = HxCountArgv(envp);
-    char *new_envp[envc+2];
+    char *new_envp[envc+PRESERVE_ENV_LEN+1];
     memcpy(new_envp, envp, (envc+1)*sizeof(char*));
     AUTO_FREE_LDLIB HxLdlib new_ldlib = {0};
 
-    if(info->rpath || info->runpath) {
-        // Find LD_LIBRARY_PATH
-        int ldlib_idx = -1;
-        for(int i = 0; i <= envc; i++) {
-            if(strncmp(envp[i], "LD_LIBRARY_PATH=", strlen("LD_LIBRARY_PATH=")) == 0) {
-                ldlib_idx = i;
-                break;
+    struct HxEnv env = { .envp=new_envp, .idx=envc };
+
+    AUTO_FREE_CHAR char *hxuid = NULL;
+    AUTO_FREE_CHAR char *hxgid = NULL;
+
+    for(int i = 0; i < PRESERVE_ENV_LEN; i++) {
+        // If var is not found in envp...
+        if(HxFindEnv(new_envp, PRESERVE_ENV[i]) == -1) {
+            // If it was HxUid or HxGid, fill from globals instead
+            // environ backup might contain outdated info
+            if(strcmp("HxUid", PRESERVE_ENV[i]) == 0) {
+                if(asprintf(&hxuid, "HxUid=%d", HxUid) == -1) return -1;
+                HxEnv_append(&env, hxuid);
+                continue;
+            } else if(strcmp("HxGid", PRESERVE_ENV[i]) == 0) {
+                if(asprintf(&hxuid, "HxGid=%d", HxGid) == -1) return -1;
+                HxEnv_append(&env, hxgid);
+                continue;
+            }
+
+            // Try real environ
+            int idx = HxFindEnv(environ, PRESERVE_ENV[i]);
+            if(idx != -1) {
+                HxEnv_append(&env, environ[idx]);
+            } else {
+                // Try environ backup
+                idx = HxFindEnv(HxEnviron, PRESERVE_ENV[i]);
+                if(idx != -1) {
+                    HxEnv_append(&env, HxEnviron[idx]);
+                }
             }
         }
+    }
+
+    if(info->rpath || info->runpath) {
+        // Find LD_LIBRARY_PATH
+        int ldlib_idx = HxFindEnv(new_envp, "LD_LIBRARY_PATH");
 
         if(ldlib_idx != -1) {
             HxLdlib_set(&new_ldlib, envp[ldlib_idx]);
@@ -158,8 +205,7 @@ static int HxHandleElf64(const char *new_path, char *const argv[], char *const e
             if(ldlib_idx != -1) {
                 new_envp[ldlib_idx] = new_ldlib.buf;
             } else {
-                new_envp[envc] = new_ldlib.buf;
-                new_envp[envc+1] = '\0';
+                HxEnv_append(&env, new_ldlib.buf);
             }
         }
     }
@@ -191,10 +237,14 @@ static int HxHandleElf64(const char *new_path, char *const argv[], char *const e
     if(HxDebug) {
         eprintf("execve(\"%s\", [", new_path);
         eprintf("\"%s\"", new_argv[0]);
-        for(char *const *cur = new_argv+1; *cur != 0; cur++) {
+        for(char *const *cur = new_argv+1; *cur; cur++) {
             eprintf(", \"%s\"", *cur);
         }
-        eprintf("], %p)\n", envp);
+        eprintf("], [\"%s\"", new_envp[0]);
+        for(char **cur = new_envp+1; *cur; cur++) {
+            eprintf(", \"%s\"", *cur);
+        }
+        eprintf("])\n");
     }
 
     return execve_real(new_path, new_argv, new_envp);

@@ -1,5 +1,7 @@
 #include <stddef.h>
 
+size_t HxCountArgv(char *const argv[]);
+
 void eprintf(char *fmt, ...);
 
 size_t HxExpandedLen(const char *path);

@@ -11,6 +11,12 @@ static void strmove(char *dst, char *src) {
     memmove(dst, src, strlen(src) + 1);
 }
 
+PRIVATE size_t HxCountArgv(char *const argv[]) {
+    size_t count = 0;
+    while(argv[count] != 0) count += 1;
+    return count;
+}
+
 PRIVATE void eprintf(char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
