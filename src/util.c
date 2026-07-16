@@ -7,6 +7,10 @@
 
 #include "hxroot.h"
 
+static void strmove(char *dst, char *src) {
+    memmove(dst, src, strlen(src) + 1);
+}
+
 PRIVATE void eprintf(char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
@@ -52,7 +56,7 @@ PRIVATE void HxUnexpandPath(char *path) {
     // If prefix equals to root...
     if(strncmp(path, HxRoot, HxRootLen) == 0) {
         // ...move everything after it to beginning
-        strcpy(path, path + HxRootLen);
+        strmove(path, path + HxRootLen);
         // And if it is empty, add a slash
         if(path[0] == '\0') strcpy(path, "/");
     }
