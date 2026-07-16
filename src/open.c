@@ -56,6 +56,11 @@ int open(const char *path, int flags, ...) {
 }
 int open64(const char *path, int flags, ...) __attribute__((alias("open")));
 
+int __open_2(const char *path, int oflag) {
+    return open(path, oflag);
+}
+int __open64_2(const char *path, int oflag) __attribute__((alias("__open_2")));
+
 static int (*creat_real)(const char *path, mode_t mode);
 int creat(const char *path, mode_t mode) {
     if(!creat_real) creat_real = dlsym(RTLD_NEXT, "creat");
@@ -144,7 +149,3 @@ FILE *freopen(const char *restrict path, const char *restrict mode, FILE *restri
     return freopen_real(new_path, mode, stream);
 }
 FILE *freopen64(const char *restrict path, const char *restrict mode, FILE *restrict stream) __attribute__((alias("freopen")));
-
-int __open_2(const char *path, int oflag) {
-    return open(path, oflag);
-}
