@@ -4,8 +4,17 @@
 
 #include "hxroot.h"
 
+static int (*utime_real)(const char *path, const struct utimbuf *times);
 int utime(const char *path, const struct utimbuf *times) {
-    eprintf("UNIMPLEMENTED SHIT! utime\n"); abort();
+    if(!utime_real) utime_real = dlsym(RTLD_NEXT, "utime");
+    HxInit();
+
+    int len = HxL(path);
+    char pathbuf[len];
+    const char *new_path = HxExpandPath(pathbuf, path);
+
+    if(HxDebug) eprintf("utime(\"%s\" -> \"%s\", %p)\n", path, new_path, times);
+    return utime_real(new_path, times);
 }
 
 static int (*utimes_real)(const char *path, const struct timeval times[2]);
