@@ -16,7 +16,7 @@ int mkdir(const char *path, mode_t mode) {
     return mkdir_real(new_path, mode);
 }
 
-int (*mkdirat_real)(int fd, const char *path, mode_t mode);
+static int (*mkdirat_real)(int fd, const char *path, mode_t mode);
 int mkdirat(int fd, const char *path, mode_t mode) {
     if(!mkdirat_real) mkdirat_real = dlsym(RTLD_NEXT, "mkdirat");
     HxInit();

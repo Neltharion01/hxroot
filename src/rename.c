@@ -37,7 +37,7 @@ int rename(const char *old, const char *new) {
     return rename_real(new_old, new_new);
 }
 
-int (*renameat_real)(int oldfd, const char *old, int newfd, const char *new);
+static int (*renameat_real)(int oldfd, const char *old, int newfd, const char *new);
 int renameat(int oldfd, const char *old, int newfd, const char *new) {
     if(!renameat_real) renameat_real = dlsym(RTLD_NEXT, "renameat");
     HxInit();
@@ -66,7 +66,7 @@ int renameat(int oldfd, const char *old, int newfd, const char *new) {
     return renameat_real(oldfd, new_old, newfd, new_new);
 }
 
-int (*renameat2_real)(int olddirfd, const char *oldpath, int newdirfd, const char *newpath, unsigned int flags);
+static int (*renameat2_real)(int olddirfd, const char *oldpath, int newdirfd, const char *newpath, unsigned int flags);
 int renameat2(int olddirfd, const char *oldpath, int newdirfd, const char *newpath, unsigned int flags) {
     if(!renameat2_real) renameat2_real = dlsym(RTLD_NEXT, "renameat2");
     HxInit();

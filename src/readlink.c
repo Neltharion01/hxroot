@@ -32,7 +32,7 @@ ssize_t readlink(const char *path, char *buf, size_t bufsize) {
     }
 }
 
-ssize_t (*readlinkat_real)(int fd, const char *path, char *buf, size_t bufsize);
+static ssize_t (*readlinkat_real)(int fd, const char *path, char *buf, size_t bufsize);
 ssize_t readlinkat(int fd, const char *path, char *buf, size_t bufsize) {
     if(!readlinkat_real) readlinkat_real = dlsym(RTLD_NEXT, "readlinkat");
     HxInit();

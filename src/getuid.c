@@ -39,7 +39,7 @@ gid_t getegid(void) {
     return getegid_real();
 }
 
-int (*getresuid_real)(uid_t *ruid, uid_t *euid, uid_t *suid);
+static int (*getresuid_real)(uid_t *ruid, uid_t *euid, uid_t *suid);
 int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
     HxInit();
     if(HxUid != -1) { *ruid = HxUid; *euid = HxUid; *suid = HxUid; return 0; }
@@ -48,7 +48,7 @@ int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid) {
     return getresuid_real(ruid, euid, suid);
 }
 
-int (*getresgid_real)(gid_t *rgid, gid_t *egid, gid_t *sgid);
+static int (*getresgid_real)(gid_t *rgid, gid_t *egid, gid_t *sgid);
 int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid) {
     HxInit();
     if(HxGid != -1) { *rgid = HxGid; *egid = HxGid; *sgid = HxGid; return 0; }

@@ -4,7 +4,7 @@
 
 #include "hxroot.h"
 
-int (*chown_real)(const char *path, uid_t owner, gid_t group);
+static int (*chown_real)(const char *path, uid_t owner, gid_t group);
 int chown(const char *path, uid_t owner, gid_t group) {
     if(!chown_real) chown_real = dlsym(RTLD_NEXT, "chown");
     HxInit();
@@ -18,7 +18,7 @@ int chown(const char *path, uid_t owner, gid_t group) {
     return chown_real(new_path, owner, group);
 }
 
-int (*fchown_real)(int fd, uid_t owner, gid_t group);
+static int (*fchown_real)(int fd, uid_t owner, gid_t group);
 int fchown(int fd, uid_t owner, gid_t group) {
     if(!fchown_real) fchown_real = dlsym(RTLD_NEXT, "fchown");
     HxInit();
@@ -28,7 +28,7 @@ int fchown(int fd, uid_t owner, gid_t group) {
     return fchown_real(fd, owner, group);
 }
 
-int (*lchown_real)(const char *path, uid_t owner, gid_t group);
+static int (*lchown_real)(const char *path, uid_t owner, gid_t group);
 int lchown(const char *path, uid_t owner, gid_t group) {
     if(!lchown_real) lchown_real = dlsym(RTLD_NEXT, "lchown");
     HxInit();
@@ -42,7 +42,7 @@ int lchown(const char *path, uid_t owner, gid_t group) {
     return lchown_real(new_path, owner, group);
 }
 
-int (*fchownat_real)(int fd, const char *path, uid_t owner, gid_t group, int flag);
+static int (*fchownat_real)(int fd, const char *path, uid_t owner, gid_t group, int flag);
 int fchownat(int fd, const char *path, uid_t owner, gid_t group, int flag) {
     if(!fchownat_real) fchownat_real = dlsym(RTLD_NEXT, "fchownat");
     HxInit();

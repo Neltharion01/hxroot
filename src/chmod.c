@@ -17,7 +17,7 @@ int chmod(const char *path, mode_t mode) {
     return chmod_real(new_path, mode);
 }
 
-int (*fchmodat_real)(int fd, const char *path, mode_t mode, int flag);
+static int (*fchmodat_real)(int fd, const char *path, mode_t mode, int flag);
 int fchmodat(int fd, const char *path, mode_t mode, int flag) {
     if(!fchmodat_real) fchmodat_real = dlsym(RTLD_NEXT, "fchmodat");
     HxInit();

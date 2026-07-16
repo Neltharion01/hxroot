@@ -5,7 +5,7 @@
 
 #include "hxroot.h"
 
-int (*statfs_real)(const char *path, struct statfs *buf);
+static int (*statfs_real)(const char *path, struct statfs *buf);
 int statfs(const char *path, struct statfs *buf) {
     if(!statfs_real) statfs_real = dlsym(RTLD_NEXT, "statfs");
     HxInit();
@@ -17,7 +17,7 @@ int statfs(const char *path, struct statfs *buf) {
     return statfs_real(new_path, buf);
 }
 
-int (*statvfs_real)(const char *restrict path, struct statvfs *restrict buf);
+static int (*statvfs_real)(const char *restrict path, struct statvfs *restrict buf);
 int statvfs(const char *restrict path, struct statvfs *restrict buf) {
     if(!statvfs_real) statvfs_real = dlsym(RTLD_NEXT, "statvfs");
     HxInit();

@@ -30,7 +30,7 @@ int utimes(const char *path, const struct timeval times[2]) {
     return utimes_real(new_path, times);
 }
 
-int (*lutimes_real)(const char *path, const struct timeval times[2]);
+static int (*lutimes_real)(const char *path, const struct timeval times[2]);
 int lutimes(const char *path, const struct timeval times[2]) {
     if(!lutimes_real) lutimes_real = dlsym(RTLD_NEXT, "lutimes");
     HxInit();
@@ -43,7 +43,7 @@ int lutimes(const char *path, const struct timeval times[2]) {
     return lutimes_real(new_path, times);
 }
 
-int (*utimensat_real)(int dirfd, const char *path, const struct timespec times[2], int flags);
+static int (*utimensat_real)(int dirfd, const char *path, const struct timespec times[2], int flags);
 int utimensat(int dirfd, const char *path, const struct timespec times[2], int flags) {
     if(!utimensat_real) utimensat_real = dlsym(RTLD_NEXT, "utimensat");
     HxInit();

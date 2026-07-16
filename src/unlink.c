@@ -9,7 +9,7 @@
 
 #include "hxroot.h"
 
-int (*rmdir_real)(const char *path);
+static int (*rmdir_real)(const char *path);
 int rmdir(const char *path) {
     if(!rmdir_real) rmdir_real = dlsym(RTLD_NEXT, "rmdir");
     HxInit();
