@@ -8,6 +8,8 @@ void *dlopen(const char *path, int flags) {
     if(!dlopen_real) dlopen_real = dlsym(RTLD_NEXT, "dlopen");
     HxInit();
 
+    if(!path) return dlopen_real(path, flags);
+
     int len = HxL(path);
     char pathbuf[len];
     const char *new_path = HxExpandPath(pathbuf, path);
@@ -20,6 +22,8 @@ static void *(*dlmopen_real)(Lmid_t lmid, const char *path, int flags);
 void *dlmopen(Lmid_t lmid, const char *path, int flags) {
     if(!dlmopen_real) dlmopen_real = dlsym(RTLD_NEXT, "dlmopen");
     HxInit();
+
+    if(!path) return dlmopen_real(lmid, path, flags);
 
     int len = HxL(path);
     char pathbuf[len];
