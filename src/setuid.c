@@ -47,7 +47,3 @@ int setresgid(gid_t rgid, gid_t egid, gid_t sgid) {
     if(rgid != -1) HxSetGid(rgid);
     return 0;
 }
-
-int setgroups(size_t size, const gid_t list[]) {
-    return 0;
-}
