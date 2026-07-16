@@ -32,6 +32,7 @@ int mkstemp(char *template) {
     }
     return ret;
 }
+int mkstemp64(char *template) __attribute__((alias("mkstemp")));
 
 static int (*mkostemp_real)(char *template, int flags);
 int mkostemp(char *template, int flags) {
@@ -86,6 +87,7 @@ int mkstemps(char *template, int suffixlen) {
 int mkostemps(char *template, int suffixlen, int flags) {
     eprintf("UNIMPLEMENTED SHIT! mkostemps\n"); abort();
 }
+int mkostemps64(char *template, int suffixlen, int flags) __attribute__((alias("mkostemps")));
 
 static char *(*mkdtemp_real)(char *template);
 char *mkdtemp(char *template) {
