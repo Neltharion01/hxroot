@@ -33,9 +33,12 @@ static bool HxShouldExpand(const char *path) {
     if(path[0] != '/') return false;
     // Check excludes...
     for(int i = 0; HxBinds[i] != 0; i++) {
+        size_t path_len = strlen(path);
         size_t prefix_len = strlen(HxBinds[i]);
+        if(path_len < prefix_len) continue;
+        char lastchar = path[prefix_len];
         // Compare by prefix
-        if(strncmp(path, HxBinds[i], prefix_len) == 0) {
+        if(strncmp(path, HxBinds[i], prefix_len) == 0 && (lastchar == '/' || lastchar == '\0')) {
             return false;
         }
     }

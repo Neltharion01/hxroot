@@ -68,7 +68,7 @@ cd "$dest"
 
 $HxGdb \
 env -i TERM="$TERM" HOME="/root" \
-    HxRoot="$dest" HxBinds="/dev/ /proc/ /sys/" HxLinker="$HxLinker" HxDebug="$HxDebug" \
+    HxRoot="$dest" HxBinds="/dev /proc /sys" HxLinker="$HxLinker" HxDebug="$HxDebug" \
     HxL2s="$HxL2s" HxProot="$HxProot" HxUid="$HxUid" HxGid="$HxGid" \
     LD_PRELOAD="$LD_PRELOAD" \
     LD_LIBRARY_PATH="$dest/usr/lib:$dest/usr/lib/$TRIPLET" \
