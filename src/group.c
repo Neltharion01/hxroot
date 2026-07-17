@@ -127,10 +127,14 @@ int getgrouplist(const char *user, gid_t group, gid_t *groups, int *ngroups) {
 
     int i = 0;
 
+    // Include first group
+    if(i < *ngroups) groups[i] = group;
+    i += 1;
+
     int ret = fgetgrent_r(f, &grp, buf, sizeof(buf), &result);
     while(ret == 0 && result) {
         for(char **mem = grp.gr_mem; *mem; mem++) {
-            if(strcmp(*mem, user) == 0) {
+            if(strcmp(*mem, user) == 0 && grp.gr_gid != group) {
                 if(i < *ngroups) groups[i] = grp.gr_gid;
                 i += 1;
             }
