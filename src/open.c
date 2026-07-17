@@ -4,8 +4,21 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <string.h>
 
 #include "hxroot.h"
+
+const char FAKESTAT[] =
+    "cpu 0 0 0 0 0 0 0 0 0 0\n"
+    "cpu0 0 0 0 0 0 0 0 0 0 0\n"
+    "cpu1 0 0 0 0 0 0 0 0 0 0\n"
+    "cpu2 0 0 0 0 0 0 0 0 0 0\n"
+    "cpu3 0 0 0 0 0 0 0 0 0 0\n"
+    "cpu4 0 0 0 0 0 0 0 0 0 0\n"
+    "cpu5 0 0 0 0 0 0 0 0 0 0\n"
+    "cpu6 0 0 0 0 0 0 0 0 0 0\n"
+    "cpu7 0 0 0 0 0 0 0 0 0 0\n"
+    "btime 0\n";
 
 static int (*open_real)(const char *path, int flags, ...);
 int open(const char *path, int flags, ...) {
@@ -126,6 +139,12 @@ static FILE *(*fopen_real)(const char *path, const char *mode);
 FILE *fopen(const char *path, const char *mode) {
     if(!fopen_real) fopen_real = dlsym(RTLD_NEXT, "fopen");
     HxInit();
+
+    if(strcmp(path, "/proc/stat") == 0) {
+        // Fake proc stat for htop
+        // -1 is for discarding the null byte
+        return fmemopen((void*)FAKESTAT, sizeof(FAKESTAT), "r");
+    }
 
     int len = HxL(path);
     char pathbuf[len];
