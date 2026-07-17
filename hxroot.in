@@ -1,7 +1,36 @@
 #!/bin/sh
 set -e
 
-HxLinker="$GLIBC_PREFIX/lib/ld-linux-aarch64.so.1"
+HXLINKER="$(echo "$GLIBC_PREFIX"/lib/ld-linux-*.so.*)"
+# option only supported only by gcc
+TRIPLET="$(cc -print-multiarch)"
+# this variable is set in Makefile
+#LIBHXROOT=
+
+if [ -z "$HXLINKER" ]; then
+    echo "ld-linux not found" >&2
+    exit 1
+fi
+
+##########
+cat <<'END'
+#!/bin/sh
+set -e
+END
+##########
+
+##########
+cat <<END
+
+HxLinker="$HXLINKER"
+LD_PRELOAD="$LIBHXROOT:$GLIBC_PREFIX/lib/libc.so.6"
+TRIPLET="$TRIPLET"
+
+END
+##########
+
+##########
+cat <<'END'
 HxL2s="${HxL2s:-1}"
 HxUid="${HxId:-0}"
 HxGid="${HxId:-0}"
@@ -32,7 +61,7 @@ if [ $# -gt 0 ]; then
     shell="$1"
     shift
 else
-    shell="/bin/bash"
+    shell="bin/bash"
 fi
 
 cd "$dest"
@@ -41,8 +70,10 @@ $HxGdb \
 env -i TERM="$TERM" HOME="/root" \
     HxRoot="$dest" HxBinds="/dev/ /proc/ /sys/" HxLinker="$HxLinker" HxDebug="$HxDebug" \
     HxL2s="$HxL2s" HxProot="$HxProot" HxUid="$HxUid" HxGid="$HxGid" \
-    LD_PRELOAD="$HOME/hxroot/libhxroot.so:$GLIBC_PREFIX/lib/libc.so.6" \
-    LD_LIBRARY_PATH="$dest/usr/lib:$dest/usr/lib/aarch64-linux-gnu" \
+    LD_PRELOAD="$LD_PRELOAD" \
+    LD_LIBRARY_PATH="$dest/usr/lib:$dest/usr/lib/$TRIPLET" \
     PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin" \
 "$HxLinker" \
 "$dest/$shell" "$@"
+END
+##########
