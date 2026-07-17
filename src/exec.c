@@ -146,7 +146,7 @@ static int HxHandleElf64(const char *new_path, char *const argv[], char *const e
                 HxEnv_append(&env, hxuid);
                 continue;
             } else if(strcmp("HxGid", PRESERVE_ENV[i]) == 0) {
-                if(asprintf(&hxuid, "HxGid=%d", HxGid) == -1) return -1;
+                if(asprintf(&hxgid, "HxGid=%d", HxGid) == -1) return -1;
                 HxEnv_append(&env, hxgid);
                 continue;
             }
