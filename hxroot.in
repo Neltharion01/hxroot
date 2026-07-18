@@ -66,6 +66,7 @@ fi
 
 cd "$dest"
 
+exec \
 $HxGdb \
 env -i TERM="$TERM" HOME="/root" \
     HxRoot="$dest" HxBinds="/dev /proc /sys" HxLinker="$HxLinker" HxDebug="$HxDebug" \
