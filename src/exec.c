@@ -89,13 +89,13 @@ struct HxEnv {
     int idx;
 };
 
-void HxEnv_append(struct HxEnv *env, char *var) {
+static void HxEnv_append(struct HxEnv *env, char *var) {
     env->envp[env->idx] = var;
     env->envp[env->idx+1] = '\0';
     env->idx += 1;
 }
 
-int HxFindEnv(char **envp, const char *name) {
+static int HxFindEnv(char **envp, const char *name) {
     int namelen = strlen(name);
     for(int i = 0; envp[i]; i++) {
         if(strncmp(envp[i], name, namelen) == 0 && envp[i][namelen] == '=') {

@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <dlfcn.h>
 
-int (*prctl_real)(int op, ...);
+static int (*prctl_real)(int op, ...);
 int prctl(int op, ...) {
     if(!prctl_real) prctl_real = dlsym(RTLD_NEXT, "prctl");
 

@@ -8,7 +8,7 @@
 
 #include "hxroot.h"
 
-const char FAKESTAT[] =
+static const char FAKESTAT[] =
     "cpu 0 0 0 0 0 0 0 0 0 0\n"
     "cpu0 0 0 0 0 0 0 0 0 0 0\n"
     "cpu1 0 0 0 0 0 0 0 0 0 0\n"

@@ -22,7 +22,7 @@ int audit_log_user_command(int audit_fd, int type, const char *command,
     return 1;
 }
 
-int (*fcntl_real)(int fd, int op, unsigned long arg);
+static int (*fcntl_real)(int fd, int op, unsigned long arg);
 int fcntl(int fd, int op, unsigned long arg) {
     if(!fcntl_real) fcntl_real = dlsym(RTLD_NEXT, "fcntl");
     if(fd == AUDIT_PLACEHOLDER) return 0;

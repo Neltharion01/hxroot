@@ -44,7 +44,7 @@ int symlinkat(const char *target, int newdirfd, const char *linkpath) {
     return symlinkat_real(new_target, newdirfd, new_linkpath);
 }
 
-char *HxL2sName(const char *path) {
+static char *HxL2sName(const char *path) {
     char *pathbuf = strdupa(path);
 
     char *lastslash = strrchr(pathbuf, '/');
@@ -63,7 +63,7 @@ char *HxL2sName(const char *path) {
     return ret;
 }
 
-int HxL2sCreate(const char *linkcountfile) {
+static int HxL2sCreate(const char *linkcountfile) {
     AUTO_CLOSE int fd = open(linkcountfile, O_CREAT|O_RDWR|O_EXCL, 0o777);
     if(fd == -1) return -1;
     // Lock the file
@@ -81,7 +81,7 @@ int HxL2sCreate(const char *linkcountfile) {
     return 0;
 }
 
-int HxL2sIncrement(const char *linkcountfile) {
+static int HxL2sIncrement(const char *linkcountfile) {
     AUTO_CLOSE int fd = open(linkcountfile, O_RDWR, 0o777);
     if(fd == -1) return -1;
     // Lock the file
