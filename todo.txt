@@ -1,6 +1,0 @@
-TODO:
-group (getgrent, getgrnam)
-shadow (getspent)
-utmp/utmpx (getutent, updwtmp)
-Nuke HxDebug when it gets mostly stable
-Probably can return link count for stat calls
