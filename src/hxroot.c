@@ -18,6 +18,8 @@ PRIVATE int HxUid = -1;
 PRIVATE int HxGid = -1;
 
 PRIVATE char **HxEnviron = 0;
+PRIVATE char *HxExe = 0;
+PRIVATE int HxExeLen = 0;
 
 extern char **environ;
 

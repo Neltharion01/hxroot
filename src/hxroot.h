@@ -24,6 +24,9 @@ extern int HxGid;
 
 // Environ backup to workaround programs which modify environ directly (hello shadow)
 extern char **HxEnviron;
+// Faked /proc/self/exe path
+extern char *HxExe;
+extern int HxExeLen;
 
 #include "util.h"
 

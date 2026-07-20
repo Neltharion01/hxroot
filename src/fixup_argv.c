@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/prctl.h>
 #include <linux/prctl.h>
+#include <stdlib.h>
 
 #include "hxroot.h"
 
@@ -33,6 +34,26 @@ static int HxFixupArgv(int argc, char *argv[], char *envp[]) {
 
     // Optimistic check
     if(real_argv == argv[0]) return 0;
+
+    // Save real exe path
+    // Unfortunately we have to parse argv manually for that...
+    char *real_exe = real_argv;
+    if(strstr(real_exe, "ld-linux-")) {
+        // Skip 1st arg
+        real_exe = strchr(real_exe, 0) + 1;
+        if(strcmp(real_exe, "--argv0") == 0) {
+            // Skip another arg
+            real_exe = strchr(real_exe, 0) + 1;
+            real_exe = strchr(real_exe, 0) + 1;
+        }
+        real_exe = strdupa(real_exe);
+        HxUnexpandPath(real_exe);
+        HxExe = realpath(real_exe, NULL);
+        if(HxExe) {
+            HxUnexpandPath(HxExe);
+            HxExeLen = strlen(HxExe);
+        }
+    }
 
     // Move argv[0]
     size_t argv0len = strlen(argv[0]) + 1;

@@ -11,6 +11,12 @@ ssize_t readlink(const char *path, char *buf, size_t bufsize) {
     if(!readlink_real) readlink_real = dlsym(RTLD_NEXT, "readlink");
     HxInit();
 
+    if(HxExe && strcmp(path, "/proc/self/exe") == 0) {
+        int len = bufsize > HxExeLen+1 ? HxExeLen+1 : bufsize;
+        memcpy(buf, HxExe, len);
+        return len;
+    }
+
     int len = HxL(path);
     char pathbuf[len];
     const char *new_path = HxExpandPath(pathbuf, path);
@@ -36,6 +42,12 @@ static ssize_t (*readlinkat_real)(int fd, const char *path, char *buf, size_t bu
 ssize_t readlinkat(int fd, const char *path, char *buf, size_t bufsize) {
     if(!readlinkat_real) readlinkat_real = dlsym(RTLD_NEXT, "readlinkat");
     HxInit();
+
+    if(HxExe && strcmp(path, "/proc/self/exe") == 0) {
+        int len = bufsize > HxExeLen+1 ? HxExeLen+1 : bufsize;
+        memcpy(buf, HxExe, len);
+        return len;
+    }
 
     int len = HxL(path);
     char pathbuf[len];
