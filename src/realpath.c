@@ -19,3 +19,7 @@ char *realpath(const char *path, char *resolved_path) {
     HxUnexpandPath(ret);
     return ret;
 }
+
+char *canonicalize_file_name(const char *path) {
+    return realpath(path, NULL);
+}
