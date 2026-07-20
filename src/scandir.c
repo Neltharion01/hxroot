@@ -14,6 +14,7 @@ int scandir(const char *restrict dirp, struct dirent ***restrict namelist, typeo
 
     return scandir_real(new_dirp, namelist, filter, compar);
 }
+int scandir64(const char *restrict dirp, struct dirent ***restrict namelist, typeof(int (const struct dirent *)) *filter, typeof(int (const struct dirent **, const struct dirent **)) *compar) __attribute__((alias("scandir")));
 
 static int (*scandirat_real)(int dirfd, const char *restrict dirp, struct dirent ***restrict namelist, typeof(int (const struct dirent *)) *filter, typeof(int (const struct dirent **, const struct dirent **)) *compar);
 int scandirat(int dirfd, const char *restrict dirp, struct dirent ***restrict namelist, typeof(int (const struct dirent *)) *filter, typeof(int (const struct dirent **, const struct dirent **)) *compar) {
@@ -26,3 +27,4 @@ int scandirat(int dirfd, const char *restrict dirp, struct dirent ***restrict na
 
     return scandirat_real(dirfd, new_dirp, namelist, filter, compar);
 }
+int scandirat64(int dirfd, const char *restrict dirp, struct dirent ***restrict namelist, typeof(int (const struct dirent *)) *filter, typeof(int (const struct dirent **, const struct dirent **)) *compar) __attribute__((alias("scandirat")));
