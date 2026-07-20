@@ -199,3 +199,18 @@ int statx(int dirfd, const char *path, int flags, unsigned int mask, struct stat
     }
     return ret;
 }
+
+int __xstat(int ver, const char *path, struct stat *statbuf) {
+    return stat(path, statbuf);
+}
+int __xstat64(int ver, const char *path, struct stat *statbuf) __attribute__((alias("__xstat")));
+
+int __fxstat(int ver, int fd, struct stat *statbuf) {
+    return fstat(fd, statbuf);
+}
+int __fxstat64(int ver, int fd, struct stat *statbuf) __attribute__((alias("__fxstat")));
+
+int __lxstat(int ver, const char *path, struct stat *statbuf) {
+    return lstat(path, statbuf);
+}
+int __lxstat64(int ver, const char *path, struct stat *statbuf) __attribute__((alias("__lxstat")));
