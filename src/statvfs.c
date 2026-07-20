@@ -16,6 +16,7 @@ int statfs(const char *path, struct statfs *buf) {
 
     return statfs_real(new_path, buf);
 }
+int statfs64(const char *path, struct statfs *buf) __attribute__((alias("statfs")));
 
 static int (*statvfs_real)(const char *restrict path, struct statvfs *restrict buf);
 int statvfs(const char *restrict path, struct statvfs *restrict buf) {
@@ -28,3 +29,4 @@ int statvfs(const char *restrict path, struct statvfs *restrict buf) {
 
     return statvfs_real(new_path, buf);
 }
+int statvfs64(const char *restrict path, struct statvfs *restrict buf) __attribute__((alias("statvfs")));
