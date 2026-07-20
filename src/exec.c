@@ -264,13 +264,13 @@ static int HxHandleProot(const char *path, char *const argv[], char *const envp[
     memset(new_envp, 0, sizeof(char*) * (envc+1));
     int new_envp_idx = 0;
     for(int i = 0; envp[i] != 0; i++) {
-        if(strncmp("LD_PRELOAD=", envp[i], 11) != 0) {
+        if(strncmp("LD_PRELOAD=", envp[i], 11) != 0 && strncmp("LD_LIBRARY_PATH=", envp[i], 16) != 0) {
             new_envp[new_envp_idx] = envp[i];
             new_envp_idx += 1;
         }
     }
 
-    // LD_PRELOAD= proot -r $HxRoot -w $PWD -b $HxBinds -i $HxUid:$HxGid <new_path> <argv[1:]> \0
+    // LD_PRELOAD= LD_LIBRARY_PATH= proot -r $HxRoot -w $PWD -b $HxBinds -i $HxUid:$HxGid <new_path> <argv[1:]> \0
     char *new_argv[argc+8+HxBindsLen*2];
     new_argv[0] = "proot";
     new_argv[1] = "-r";
