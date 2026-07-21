@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
+#include <limits.h>
 
 #include "hxroot.h"
 
@@ -28,6 +29,11 @@ static int HxReadLinkCount(int dirfd, const char *path, const char *new_path, st
     }
 
     size_t lnkbufsiz = st.st_size+1;
+
+    // Contents of proc have always their st.st_size=0
+    if(lnkbufsiz-1 == 0) {
+        lnkbufsiz = PATH_MAX;
+    }
 
     char lnkbuf[lnkbufsiz];
     ssize_t ret = readlinkat(dirfd, path, lnkbuf, lnkbufsiz);
