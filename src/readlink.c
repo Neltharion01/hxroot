@@ -23,7 +23,7 @@ ssize_t readlink(const char *path, char *buf, size_t bufsize) {
 
     if(HxDebug) eprintf("readlink(\"%s\" -> \"%s\", %p, %ld)\n", path, new_path, buf, bufsize);
 
-    ssize_t ret = readlink_real(new_path, buf, bufsize);
+    ssize_t ret = readlink_real(new_path, buf, bufsize-1);
     if(ret == -1) return -1;
     if(ret == (ssize_t)bufsize) {
         // Truncated
