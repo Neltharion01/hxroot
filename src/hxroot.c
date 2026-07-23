@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -32,21 +33,18 @@ static void HxDoInit() {
 
     char *binds = getenv("HxBinds");
     if(binds) {
-        binds = strdup(binds);
+        binds = strdupa(binds);
 
         char *saveptr = NULL;
         char *tok = strtok_r(binds, " \n", &saveptr);
         int i = 0;
-        while(tok != NULL) {
+        while(tok != NULL && i < 16) {
             HxBinds[i] = strdup(tok);
             tok = strtok_r(NULL, " \n", &saveptr);
             i += 1;
         }
 
         HxBindsLen = i;
-
-        free(binds);
-        binds = NULL;
     }
 
     char *dbg = getenv("HxDebug");
