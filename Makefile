@@ -3,7 +3,7 @@ CXXSOURCES := $(wildcard src/*.cpp)
 OBJS       := $(SOURCES:.c=.o) $(CXXSOURCES:.cpp=.o)
 DEPS       := $(OBJS:.o=.d)
 LINTS      := -Wall -Wextra -Wno-unused-parameter -Wno-missing-attributes -Wno-sign-compare
-CFLAGS     += $(INCLUDES) -MMD -MP -pipe -fPIC -D_FORTIFY_SOURCE=2 $(LINTS)
+CFLAGS     += $(INCLUDES) -MMD -MP -pipe -fPIC -D_FORTIFY_SOURCE=3 $(LINTS)
 
 # When building a package, set GLIBC_PREFIX instead of PREFIX (already set on termux-glibc)
 GLIBC_PREFIX ?= /usr
