@@ -1,5 +1,5 @@
 #!/bin/sh
-set -euo pipefail
+set -eu
 
 if [ "$#" != 1 ]; then
     echo "Usage: hxunconvert <rootfs>"
@@ -18,5 +18,7 @@ find "$1" -type l | while read l; do
     rm "$l"
     ln -sv "$rc" "$l"
 done
+
+ln -svf ../proc/self/mounts "$1"/etc/mtab
 
 echo Done
