@@ -135,6 +135,11 @@ int openat(int dirfd, const char *path, int flags, ...) {
 }
 int openat64(int dirfd, const char *path, int flags, ...) __attribute__((alias("openat")));
 
+int __openat_2(int fd, const char *path, int oflag) {
+    return openat(fd, path, oflag);
+}
+int __openat64_2(int fd, const char *path, int oflag) __attribute__((alias("__openat_2")));
+
 static FILE *(*fopen_real)(const char *path, const char *mode);
 FILE *fopen(const char *path, const char *mode) {
     if(!fopen_real) fopen_real = dlsym(RTLD_NEXT, "fopen");
