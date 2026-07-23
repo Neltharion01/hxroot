@@ -14,8 +14,11 @@
 
 static int (*fstatat_real)(int dirfd, const char *path, struct stat *statbuf, int flags);
 
-static int HxReadLinkCount(int dirfd, const char *path, const char *new_path, struct stat *statbuf, struct statx *statxbuf) {
+static int HxReadLinkCount(int dirfd, const char *path, const char *new_path, struct stat *statbuf, struct statx *statxbuf, int flag) {
     if(!fstatat_real) fstatat_real = dlsym(RTLD_NEXT, "fstatat");
+
+    // TODO: should probably retrieve path from /proc/self/fd instead
+    if(flag & AT_EMPTY_PATH) return 0;
 
     struct stat st = {0};
     if(fstatat_real(dirfd, new_path, &st, AT_SYMLINK_NOFOLLOW) == -1) return -1;
@@ -107,7 +110,7 @@ int stat(const char *path, struct stat *statbuf) {
         if(HxUid != -1) statbuf->st_uid = HxUid;
         if(HxGid != -1) statbuf->st_gid = HxGid;
         if(HxL2s) {
-            if(HxReadLinkCount(AT_FDCWD, path, new_path, statbuf, NULL) == -1) return -1;
+            if(HxReadLinkCount(AT_FDCWD, path, new_path, statbuf, NULL, 0) == -1) return -1;
         }
     }
     return ret;
@@ -127,7 +130,7 @@ int fstat(int fd, struct stat *statbuf) {
         if(HxGid != -1) statbuf->st_gid = HxGid;
         // Not possible here
         /*if(HxL2s) {
-            if(HxReadLinkCount(AT_FDCWD, path, new_path, statbuf, NULL) == -1) return -1;
+            if(HxReadLinkCount(AT_FDCWD, path, new_path, statbuf, NULL, 0) == -1) return -1;
         }*/
     }
     return ret;
@@ -151,7 +154,7 @@ int lstat(const char *path, struct stat *statbuf) {
         if(HxGid != -1) statbuf->st_gid = HxGid;
         if(HxL2s && S_ISLNK(statbuf->st_mode)) {
             // Technically if we land on symlink to hardlink then we shouldn't modify type and link count, but I don't know how to handle that imperfection, and it doesn't break anything
-            if(HxReadLinkCount(AT_FDCWD, path, new_path, statbuf, NULL) == -1) return -1;
+            if(HxReadLinkCount(AT_FDCWD, path, new_path, statbuf, NULL, 0) == -1) return -1;
         }
     }
     return ret;
@@ -174,7 +177,7 @@ int fstatat(int dirfd, const char *path, struct stat *statbuf, int flags) {
         if(HxUid != -1) statbuf->st_uid = HxUid;
         if(HxGid != -1) statbuf->st_gid = HxGid;
         if(HxL2s) {
-            if(HxReadLinkCount(dirfd, path, new_path, statbuf, NULL) == -1) return -1;
+            if(HxReadLinkCount(dirfd, path, new_path, statbuf, NULL, flags) == -1) return -1;
         }
     }
     return ret;
@@ -200,7 +203,11 @@ int statx(int dirfd, const char *path, int flags, unsigned int mask, struct stat
         if(HxUid != -1 && mask & STATX_UID) statxbuf->stx_uid = HxUid;
         if(HxGid != -1 && mask & STATX_GID) statxbuf->stx_gid = HxGid;
         if(HxL2s && (mask & STATX_NLINK) && (flags & AT_SYMLINK_NOFOLLOW) && S_ISLNK(statxbuf->stx_mode)) {
-            if(HxReadLinkCount(dirfd, path, new_path, NULL, statxbuf) == -1) return -1;
+            if(HxReadLinkCount(dirfd, path, new_path, NULL, statxbuf, flags) == -1) return -1;
+        }
+        if(mask & STATX_MNT_ID) {
+            statxbuf->stx_mnt_id = 0;
+            statxbuf->stx_mask |= STATX_MNT_ID;
         }
     }
     return ret;
