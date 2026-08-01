@@ -32,6 +32,9 @@ static int HxFixupArgv(int argc, char *argv[], char *envp[]) {
     char *real_argv = argv[0];
     while(strcmp(real_argv, buf) != 0) real_argv -= 1;
 
+    // Unexpand argv[0]
+    if(strncmp(argv[0], HxRoot, HxRootLen) == 0) argv[0] += HxRootLen;
+
     // Optimistic check
     if(real_argv == argv[0]) return 0;
 
@@ -46,7 +49,7 @@ static int HxFixupArgv(int argc, char *argv[], char *envp[]) {
             real_exe = strchr(real_exe, 0) + 1;
             real_exe = strchr(real_exe, 0) + 1;
         }
-        real_exe = strdupa(real_exe);
+        // Fine to overwrite because this argument will be forgotten anyways
         HxUnexpandPath(real_exe);
         HxExe = realpath(real_exe, NULL);
         if(HxExe) {
@@ -83,6 +86,7 @@ static int HxFixupArgv(int argc, char *argv[], char *envp[]) {
     program_invocation_name = argv[0];
     char *shortname = strrchr(argv[0], '/');
     if(!shortname) shortname = argv[0];
+    else shortname += 1;
     program_invocation_short_name = shortname;
 
     // Update thread name
